@@ -1,0 +1,15 @@
+{
+  "name": "zonevaz-studio",
+  "version": "2.0.0",
+  "description": "ZoneVaz Studio — secure aesthetic music ecosystem (zero-dependency Node.js backend + static front-end).",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "serve": "node server.js"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

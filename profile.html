@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZoneVaz ✨ - My Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        // Apply cached palette instantly (server-synced)
+        try {
+            const cached = JSON.parse(localStorage.getItem('zonevaz_palette_cache'));
+            if (cached) {
+                document.documentElement.style.setProperty('--cute-pink', cached.pink || '#ff9ebd');
+                document.documentElement.style.setProperty('--cute-purple', cached.purple || '#c49fff');
+                document.documentElement.style.setProperty('--bg-dark', cached.bg || '#0c0511');
+                document.documentElement.style.setProperty('--card-bg', cached.card || '#130919');
+            }
+        } catch (e) {}
+    </script>
+
+    <style>
+        :root { --bg-dark: #0c0511; --card-bg: #130919; --border-soft: rgba(255, 255, 255, 0.08); --text-white: #e9e3ee; --text-gray: #776d82; --cute-pink: #ff9ebd; --cute-purple: #c49fff; --gradient-main: linear-gradient(90deg, var(--cute-purple), var(--cute-pink)); }
+        body.theme-cyber { --bg-dark: #050a14; --card-bg: #091024; --border-soft: rgba(0, 255, 255, 0.15); --text-white: #e0fbfc; --text-gray: #6b8a9c; --cute-pink: #00ffff; --cute-purple: #ff00ff; --gradient-main: linear-gradient(90deg, #00ffff, #ff00ff); }
+        body.theme-sakura { --bg-dark: #1a0e13; --card-bg: #26141c; --border-soft: rgba(255, 183, 197, 0.15); --text-white: #fff0f5; --text-gray: #b595a2; --cute-pink: #ffb7c5; --cute-purple: #ff9ebd; --gradient-main: linear-gradient(90deg, #ff9ebd, #ffb7c5); }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: var(--bg-dark); color: var(--text-white); font-family: 'Nunito', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100dvh; }
+
+        .ambient-glow { position: fixed; filter: blur(120px); opacity: 0.1; z-index: -1; border-radius: 50%; pointer-events: none;}
+        .glow-1 { top: -10%; left: -10%; width: 45vw; height: 45vw; background: var(--cute-pink); }
+        .glow-2 { bottom: -10%; right: -10%; width: 50vw; height: 50vw; background: var(--cute-purple); }
+
+        /* Free-scroll layout — the PAGE scrolls, nothing is locked */
+        .navbar { position: sticky; top: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: rgba(12,5,17,0.7); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border-soft); z-index: 100; }
+        .navbar-inner { width: 100%; max-width: 620px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-family: 'Quicksand', sans-serif; font-size: 1.05rem; font-weight: 700; color: #fff; cursor: pointer; text-decoration: none;}
+        .logo span { color: var(--cute-pink); }
+        .back-link { color: var(--text-gray); font-size: 0.8rem; font-weight: 700; text-decoration: none; transition: 0.3s; }
+        .back-link:hover { color: var(--cute-pink); }
+
+        .page { width: 100%; max-width: 560px; margin: 0 auto; padding: 26px 18px 90px; display: flex; flex-direction: column; gap: 16px; }
+
+        /* Hero card */
+        .hero-card { background: var(--card-bg); border: 1px solid var(--border-soft); border-radius: 26px; padding: 28px 22px; text-align: center; position: relative; overflow: hidden; }
+        .hero-card::before { content: ''; position: absolute; top: -60px; left: -60px; width: 170px; height: 170px; background: var(--gradient-main); filter: blur(70px); opacity: 0.18; }
+        .avatar-wrapper { width: 104px; height: 104px; margin: 0 auto 12px; border-radius: 50%; border: 3px solid var(--cute-pink); padding: 4px; cursor: pointer; position: relative; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 0 20px rgba(255,158,189,0.2); transition: 0.3s; }
+        .avatar-wrapper:hover { transform: scale(1.05); border-color: var(--cute-purple); }
+        .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .avatar-text { font-size: 3rem; }
+        .upload-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.3s; font-size: 1.5rem; }
+        .avatar-wrapper:hover .upload-overlay { opacity: 1; }
+        .file-input-hidden { display: none; }
+        #greetName { font-family: 'Quicksand', sans-serif; font-size: 1.4rem; color: #fff; margin-bottom: 10px; }
+        .user-stats { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; position: relative; z-index: 1; }
+        .stat-badge { background: rgba(255,255,255,0.05); border: 1px solid var(--border-soft); padding: 5px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; color: var(--cute-pink); }
+
+        /* Section cards */
+        .section-card { background: var(--card-bg); border: 1px solid var(--border-soft); border-radius: 20px; padding: 20px 20px; }
+        .section-card h3 { font-family: 'Quicksand', sans-serif; font-size: 0.8rem; color: var(--text-gray); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        .form-input { width: 100%; padding: 12px 16px; border-radius: 14px; border: 1px solid var(--border-soft); background: rgba(0,0,0,0.4); color: #fff; font-family: 'Nunito', sans-serif; font-size: 0.9rem; outline: none; transition: 0.3s; }
+        .form-input:focus { border-color: var(--cute-pink); background: rgba(0,0,0,0.6); box-shadow: 0 0 10px rgba(255,158,189,0.1); }
+        .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .row-label { font-size: 0.7rem; color: var(--text-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .row-val { font-size: 0.85rem; color: #fff; font-weight: 600; word-break: break-all; }
+        .row-val.muted { color: var(--text-gray); }
+        .btn-edit-small { background: transparent; border: 1px solid var(--cute-pink); color: var(--cute-pink); padding: 6px 12px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: 0.3s; white-space: nowrap; }
+        .btn-edit-small:hover { background: rgba(255,158,189,0.12); }
+        .key-box { background: rgba(0,0,0,0.35); border: 1px dashed var(--cute-purple); border-radius: 12px; padding: 12px; font-family: monospace; font-size: 0.75rem; color: var(--cute-purple); word-break: break-all; margin-top: 8px; }
+        .quota-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-top: 10px; }
+        .quota-fill { height: 100%; width: 0%; background: var(--gradient-main); border-radius: 3px; transition: width 0.5s ease; }
+
+        .btn-main { width: 100%; background: var(--gradient-main); color: var(--bg-dark); border: none; padding: 15px; border-radius: 30px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.3s; }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255,158,189,0.3); }
+        .btn-danger { background: transparent; color: #ff4757; border: 1px solid #ff4757; }
+        .btn-danger:hover { background: rgba(255,71,87,0.1); box-shadow: none; }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.show { display: flex; }
+        .modal-card { position: relative; width: 100%; max-width: 400px; padding: 30px 24px; background: var(--card-bg); border: 1px solid var(--cute-pink); border-radius: 20px; box-shadow: 0 15px 40px rgba(255,158,189,0.15); }
+        .close-modal { position: absolute; top: -38px; right: 0; color: #fff; font-size: 2rem; cursor: pointer; background: transparent; border: none; }
+        .close-modal:hover { color: var(--cute-pink); }
+        .modal-card h2 { font-family: 'Quicksand', sans-serif; color: var(--cute-pink); font-size: 1.3rem; text-align: center; margin-bottom: 4px; }
+        .modal-card p { text-align: center; font-size: 0.75rem; color: var(--text-gray); margin-bottom: 18px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 0.72rem; color: var(--text-gray); font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    </style>
+</head>
+<body>
+
+    <!-- Glows -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <!-- Security Action Modal (Email / Password Change) -->
+    <div class="modal-overlay" id="securityModal">
+        <div class="modal-card">
+            <button class="close-modal" onclick="closeSecurityModal()">&times;</button>
+            <h2 id="secModalTitle">Security Check 🔒</h2>
+            <p>Please verify your identity to continue.</p>
+            <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" id="secOldPass" class="form-input" placeholder="Enter current password...">
+            </div>
+            <div class="form-group">
+                <label id="secNewLbl">New Value</label>
+                <input type="text" id="secNewData" class="form-input" placeholder="Enter new data...">
+            </div>
+            <button class="btn-main" onclick="verifyAndApplySecurity()">Verify & Apply</button>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="index.html" class="logo">ZoneVaz <span>✨</span></a>
+            <a href="index.html" class="back-link">← Return Hub</a>
+        </div>
+    </nav>
+
+    <!-- Main Workspace — FREE SCROLL, the page scrolls naturally -->
+    <main class="page">
+
+        <!-- Hero -->
+        <section class="hero-card">
+            <div class="avatar-wrapper" onclick="document.getElementById('avatarUpload').click()">
+                <span class="avatar-text" id="displayAvatarText">☁️</span>
+                <img id="displayAvatarImg" class="avatar-img" style="display: none;" src="" alt="Profile">
+                <div class="upload-overlay">📸</div>
+            </div>
+            <input type="file" id="avatarUpload" class="file-input-hidden" accept="image/*" onchange="handleImageUpload(event)">
+            <h2 id="greetName">User</h2>
+            <div class="user-stats">
+                <div class="stat-badge">💖 <span id="statLikes">0</span> Saved</div>
+                <div class="stat-badge">📅 <span id="statDate">Recent</span></div>
+            </div>
+        </section>
+
+        <!-- Display Name -->
+        <section class="section-card">
+            <h3>👤 Display Name</h3>
+            <input type="text" id="editName" class="form-input" placeholder="Your Name">
+        </section>
+
+        <!-- Email & Password -->
+        <section class="section-card">
+            <h3>🔐 Account Security</h3>
+            <div class="row" style="margin-bottom: 14px;">
+                <div>
+                    <div class="row-label">Email Address</div>
+                    <div class="row-val" id="dispEmail">loading...</div>
+                </div>
+                <button class="btn-edit-small" onclick="openSecurityModal('email')">Change</button>
+            </div>
+            <div class="row">
+                <div>
+                    <div class="row-label">Password</div>
+                    <div class="row-val muted">••••••••</div>
+                </div>
+                <button class="btn-edit-small" onclick="openSecurityModal('password')">Change</button>
+            </div>
+        </section>
+
+        <!-- Vibe Key + Quota -->
+        <section class="section-card">
+            <h3>🔑 Your Unique Vibe Key</h3>
+            <div class="row">
+                <div class="row-label">20 downloads / day</div>
+                <div style="display: flex; gap: 6px;">
+                    <button class="btn-edit-small" onclick="copyApiKey()">Copy</button>
+                    <button class="btn-edit-small" onclick="regenerateApiKey()">Reset</button>
+                </div>
+            </div>
+            <div class="key-box" id="dispApiKey">loading...</div>
+            <div class="row" style="margin-top: 14px;">
+                <div class="row-label">Today's Quota</div>
+                <div class="row-val" id="dispQuota">loading...</div>
+            </div>
+            <div class="quota-bar"><div class="quota-fill" id="quotaFill"></div></div>
+        </section>
+
+        <!-- Actions -->
+        <button class="btn-main" onclick="saveProfile()">Save Masterpiece 💾</button>
+        <button class="btn-main btn-danger" onclick="deleteAccount()">Delete Account 🗑️</button>
+
+    </main>
+
+    <script src="common.js?v=4"></script>
+    <script>
+        // --- SESSION (real server auth) ---
+        let currentUser = null;
+        let libraryCount = 0;
+
+        // Temporary hold for new base64 image
+        let newAvatarBase64 = null;
+
+        // Security Modal State
+        let currentSecurityAction = ''; // 'email' or 'password'
+
+        // Initialize Form Data
+        function loadProfileData() {
+            if (!currentUser) return;
+
+            document.getElementById('editName').value = currentUser.name;
+            document.getElementById('greetName').innerText = currentUser.name;
+            document.getElementById('dispEmail').innerText = currentUser.email;
+
+            document.getElementById('statLikes').innerText = libraryCount;
+            document.getElementById('statDate').innerText = currentUser.registeredAt || 'OG';
+
+            const avatarVal = currentUser.avatar || '☁️';
+            const textAvatar = document.getElementById('displayAvatarText');
+            const imgAvatar = document.getElementById('displayAvatarImg');
+
+            if (avatarVal.startsWith('data:image')) {
+                imgAvatar.src = avatarVal;
+                imgAvatar.style.display = 'block';
+                textAvatar.style.display = 'none';
+            } else {
+                textAvatar.innerText = avatarVal;
+                textAvatar.style.display = 'block';
+                imgAvatar.style.display = 'none';
+            }
+        }
+
+        // Handle Image Upload (Preview)
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 1.5 * 1024 * 1024) {
+                alert("File too large! Keep your aesthetic under 1.5MB.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                newAvatarBase64 = e.target.result;
+                document.getElementById('displayAvatarImg').src = newAvatarBase64;
+                document.getElementById('displayAvatarImg').style.display = 'block';
+                document.getElementById('displayAvatarText').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- SECURITY MODAL LOGIC ---
+        function openSecurityModal(actionType) {
+            currentSecurityAction = actionType;
+            document.getElementById('secOldPass').value = '';
+            document.getElementById('secNewData').value = '';
+
+            if (actionType === 'email') {
+                document.getElementById('secModalTitle').innerText = 'Change Email 📧';
+                document.getElementById('secNewLbl').innerText = 'New Email Address';
+                document.getElementById('secNewData').type = 'email';
+                document.getElementById('secNewData').placeholder = 'e.g. zynu@vibes.com';
+            } else {
+                document.getElementById('secModalTitle').innerText = 'Change Password 🔑';
+                document.getElementById('secNewLbl').innerText = 'New Password';
+                document.getElementById('secNewData').type = 'text';
+                document.getElementById('secNewData').placeholder = 'Enter strong password...';
+            }
+
+            document.getElementById('securityModal').classList.add('show');
+        }
+
+        function closeSecurityModal() {
+            document.getElementById('securityModal').classList.remove('show');
+        }
+
+        async function verifyAndApplySecurity() {
+            const enteredOldPass = document.getElementById('secOldPass').value.trim();
+            const newData = document.getElementById('secNewData').value.trim();
+
+            if (!enteredOldPass || !newData) {
+                alert("Please fill all fields! 🛑");
+                return;
+            }
+
+            const body = { oldPass: enteredOldPass };
+            if (currentSecurityAction === 'email') body.newEmail = newData;
+            else body.newPass = newData;
+
+            try {
+                await ZV.api('/api/profile/security', { method: 'POST', body });
+                closeSecurityModal();
+                if (currentSecurityAction === 'email') {
+                    currentUser.email = newData;
+                    document.getElementById('dispEmail').innerText = newData;
+                    alert("Email updated! ✨");
+                } else {
+                    alert("Password updated! ✨");
+                }
+            } catch (e) {
+                alert(e.message || 'Verification failed.');
+            }
+        }
+
+        // --- SAVE ALL CHANGES ---
+        async function saveProfile() {
+            const newName = document.getElementById('editName').value.trim();
+
+            if (!newName) {
+                alert("Name cannot be empty! 🥺");
+                return;
+            }
+
+            const body = { name: newName };
+            if (newAvatarBase64) body.avatar = newAvatarBase64;
+
+            try {
+                const result = await ZV.api('/api/profile', { method: 'POST', body });
+                currentUser = result.user;
+                newAvatarBase64 = null;
+                loadProfileData();
+                alert("Profile Masterpiece Saved! 💖");
+            } catch (e) {
+                alert(e.message || 'Could not save profile.');
+            }
+        }
+
+        // --- ACCOUNT DELETION ---
+        async function deleteAccount() {
+            if (confirm("Are you sure? This will wipe your account and library permanently! 💔")) {
+                try {
+                    await ZV.api('/api/profile/delete', { method: 'POST' });
+                    localStorage.removeItem('zonevaz_theme');
+                    alert("Account deleted. We'll miss your vibes. 🌧️");
+                    window.location.href = 'index.html';
+                } catch (e) {
+                    alert(e.message || 'Could not delete account.');
+                }
+            }
+        }
+
+        // --- VIBE KEY + QUOTA ---
+        async function loadVibeKey() {
+            try {
+                const q = await ZV.api('/api/mykey');
+                document.getElementById('dispApiKey').innerText = q.key;
+                document.getElementById('dispQuota').innerText = q.used + ' / ' + q.limit + ' used today';
+                const pct = Math.min(100, Math.round((q.used / q.limit) * 100));
+                document.getElementById('quotaFill').style.width = pct + '%';
+            } catch (e) {
+                document.getElementById('dispApiKey').innerText = 'unavailable';
+                document.getElementById('dispQuota').innerText = '—';
+            }
+        }
+
+        async function copyApiKey() {
+            const key = document.getElementById('dispApiKey').innerText;
+            if (!key || key === 'unavailable') return;
+            const ok = await ZV.copyText(key);
+            alert(ok ? "Vibe Key copied to clipboard! 📋" : "Could not copy automatically. Key shown above.");
+        }
+
+        async function regenerateApiKey() {
+            if (!confirm("Regenerate your Vibe Key? Your old key will stop working.")) return;
+            try {
+                const q = await ZV.api('/api/regenerate/key', { method: 'POST' });
+                document.getElementById('dispApiKey').innerText = q.key;
+                document.getElementById('dispQuota').innerText = q.used + ' / ' + q.limit + ' used today';
+                const pct = Math.min(100, Math.round((q.used / q.limit) * 100));
+                document.getElementById('quotaFill').style.width = pct + '%';
+                alert("New Vibe Key generated! ✨");
+            } catch (e) { alert(e.message || 'Could not regenerate key.'); }
+        }
+
+        // --- INIT ---
+        async function init() {
+            const boot = await ZV.bootstrap();
+            if (!boot.user) { window.location.href = 'login.html'; return; }
+            currentUser = boot.user;
+            try {
+                const d = await ZV.api('/api/library');
+                libraryCount = (d && d.library) ? d.library.length : 0;
+            } catch (e) { libraryCount = 0; }
+            loadProfileData();
+            loadVibeKey();
+        }
+        init();
+    </script>
+</body>
+</html>

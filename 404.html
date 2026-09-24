@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 — ZoneVaz ✨</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-dark: #0c0511; --card-bg: #130919; --border-soft: rgba(255, 255, 255, 0.08); --text-white: #e9e3ee; --text-gray: #776d82; --cute-pink: #ff9ebd; --cute-purple: #c49fff; --gradient-main: linear-gradient(90deg, var(--cute-purple), var(--cute-pink)); }
+        body.theme-cyber { --bg-dark: #050a14; --card-bg: #091024; --border-soft: rgba(0, 255, 255, 0.15); --text-white: #e0fbfc; --text-gray: #6b8a9c; --cute-pink: #00ffff; --cute-purple: #ff00ff; --gradient-main: linear-gradient(90deg, #00ffff, #ff00ff); }
+        body.theme-sakura { --bg-dark: #1a0e13; --card-bg: #26141c; --border-soft: rgba(255, 183, 197, 0.15); --text-white: #fff0f5; --text-gray: #b595a2; --cute-pink: #ffb7c5; --cute-purple: #ff9ebd; --gradient-main: linear-gradient(90deg, #ff9ebd, #ffb7c5); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { height: 100%; }
+        body { background-color: var(--bg-dark); color: var(--text-white); font-family: 'Nunito', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; height: 100dvh; overflow: hidden; text-align: center; }
+        .ambient-glow { position: fixed; filter: blur(140px); opacity: 0.15; z-index: -1; border-radius: 50%; pointer-events: none;}
+        .glow-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--cute-pink); }
+        .glow-2 { bottom: -10%; right: -10%; width: 50vw; height: 50vw; background: var(--cute-purple); }
+        .card { max-width: 420px; padding: 50px 35px; background: var(--card-bg); border: 1px solid var(--border-soft); border-radius: 30px; backdrop-filter: blur(20px); box-shadow: 0 20px 50px rgba(0,0,0,0.5); animation: popIn 0.5s ease; }
+        @keyframes popIn { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+        .code { font-family: 'Quicksand', sans-serif; font-size: 4.5rem; font-weight: 800; background: var(--gradient-main); -webkit-background-clip: text; color: transparent; }
+        h1 { font-family: 'Quicksand', sans-serif; font-size: 1.4rem; margin: 10px 0; }
+        p { color: var(--text-gray); font-size: 0.85rem; line-height: 1.6; margin-bottom: 25px; }
+        a { display: inline-block; background: var(--gradient-main); color: var(--bg-dark); text-decoration: none; padding: 14px 30px; border-radius: 30px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem; transition: 0.3s; }
+        a:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255, 158, 189, 0.3); }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <div class="card">
+        <div class="code">404</div>
+        <h1>This vibe wandered off ✨</h1>
+        <p>The page you're looking for doesn't exist or has moved.<br>Let's get you back to the music.</p>
+        <a href="/">Return to ZoneVaz Home</a>
+    </div>
+
+    <script>
+        try {
+            var theme = localStorage.getItem('zonevaz_theme');
+            if (theme === 'theme-cyber' || theme === 'theme-sakura') document.body.classList.add(theme);
+        } catch (e) {}
+        setTimeout(function () { window.location.href = '/'; }, 8000);
+    </script>
+</body>
+</html>

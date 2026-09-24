@@ -1,0 +1,51 @@
+# ============================================================
+#  ZoneVaz Studio — Apache configuration for cPanel shared hosting
+#  + Pretty URLs (hides .html extension)
+# ============================================================
+
+# Disable directory listing for safety
+Options -Indexes
+
+# Friendly branded 404 page
+ErrorDocument 404 /404.html
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# --- Block access to sensitive paths ---
+RewriteRule ^data/ - [F,L,NC]
+RewriteRule ^server\.js$ - [F,L,NC]
+RewriteRule ^package\.json$ - [F,L,NC]
+
+# --- Route ALL /api/* requests to the PHP front-controller ---
+RewriteRule ^api/.*$ api.php [QSA,L]
+
+# --- HIDE .html EXTENSION (pretty URLs) ---
+
+# 1) index.html  ->  /   (so https://zonevaz.me/ shows the hub, not index.html)
+RewriteCond %{THE_REQUEST} /index\.html[\s?] [NC]
+RewriteRule ^index\.html$ / [R=301,L,NE]
+
+# 2) login.html  ->  /login   (any page.html becomes page)
+RewriteCond %{THE_REQUEST} \s/+(.+?)\.html[\s?] [NC]
+RewriteRule ^(.+)\.html$ /$1 [R=301,L,NE]
+
+# 3) /login  ->  login.html  (serve the page when the clean URL is opened)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.html -f
+RewriteRule ^(.+)$ $1.html [L]
+
+</IfModule>
+
+# Extra protection for the data folder (works even if mod_rewrite is off)
+<IfModule mod_authz_core.c>
+<FilesMatch "^data/">
+  Require all denied
+</FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+<FilesMatch "^data/">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
+</IfModule>

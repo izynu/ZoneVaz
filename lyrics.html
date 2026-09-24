@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZoneVaz 🎤 - Premium Lyrics</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        // Apply cached palette instantly (server-synced)
+        try {
+            const cached = JSON.parse(localStorage.getItem('zonevaz_palette_cache'));
+            if (cached) {
+                document.documentElement.style.setProperty('--cute-pink', cached.pink || '#ff9ebd');
+                document.documentElement.style.setProperty('--cute-purple', cached.purple || '#c49fff');
+                document.documentElement.style.setProperty('--bg-dark', cached.bg || '#0c0511');
+                document.documentElement.style.setProperty('--card-bg', cached.card || '#130919');
+            }
+        } catch (e) {}
+    </script>
+
+    <style>
+        :root { --bg-dark: #0c0511; --card-bg: #130919; --border-soft: rgba(255, 255, 255, 0.08); --text-white: #e9e3ee; --text-gray: #776d82; --cute-pink: #ff9ebd; --cute-purple: #c49fff; --gradient-main: linear-gradient(90deg, var(--cute-purple), var(--cute-pink)); }
+        body.theme-cyber { --bg-dark: #050a14; --card-bg: #091024; --border-soft: rgba(0, 255, 255, 0.15); --text-white: #e0fbfc; --text-gray: #6b8a9c; --cute-pink: #00ffff; --cute-purple: #ff00ff; --gradient-main: linear-gradient(90deg, #00ffff, #ff00ff); }
+        body.theme-sakura { --bg-dark: #1a0e13; --card-bg: #26141c; --border-soft: rgba(255, 183, 197, 0.15); --text-white: #fff0f5; --text-gray: #b595a2; --cute-pink: #ffb7c5; --cute-purple: #ff9ebd; --gradient-main: linear-gradient(90deg, #ff9ebd, #ffb7c5); }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: var(--bg-dark); color: var(--text-white); font-family: 'Nunito', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+
+        .ambient-glow { position: fixed; filter: blur(140px); opacity: 0.15; z-index: -1; border-radius: 50%; pointer-events: none;}
+        .glow-1 { top: -10%; left: -10%; width: 45vw; height: 45vw; background: var(--cute-pink); }
+        .glow-2 { bottom: -10%; right: -10%; width: 50vw; height: 50vw; background: var(--cute-purple); }
+
+        /* Navbar */
+        .navbar { width: 95%; max-width: 950px; margin-top: 15px; padding: 12px 20px; border: 1px solid var(--border-soft); border-radius: 40px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); backdrop-filter: blur(15px); z-index: 100;}
+        .logo { font-family: 'Quicksand', sans-serif; font-size: 1.1rem; font-weight: 700; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 5px; }
+        .logo span { color: var(--cute-pink); font-size: 1.2rem; }
+        .back-btn { background: rgba(255,255,255,0.05); color: var(--text-white); border: 1px solid var(--border-soft); padding: 6px 16px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; text-decoration: none; transition: 0.3s; }
+        .back-btn:hover { border-color: var(--cute-pink); color: var(--cute-pink); background: rgba(255, 158, 189, 0.1); }
+
+        .main-content { width: 100%; flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 10;}
+        
+        /* STAGE 1: SEARCH */
+        #searchStage { width: 100%; max-width: 650px; padding: 30px 20px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; height: 100%; animation: fadeIn 0.5s ease;}
+        #searchStage::-webkit-scrollbar { width: 4px; }
+        #searchStage::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 10px; }
+
+        .hero-text { font-family: 'Quicksand', sans-serif; font-size: 2rem; text-align: center; margin-bottom: 5px; background: var(--gradient-main); -webkit-background-clip: text; color: transparent; font-weight: 800;}
+        .sub-text { color: var(--text-gray); font-size: 0.85rem; font-weight: 600; text-align: center; margin-bottom: 25px;}
+
+        .search-container { width: 100%; margin-bottom: 25px; }
+        .search-bar { width: 100%; padding: 15px 25px; border-radius: 50px; border: 1px solid var(--border-soft); background: rgba(0,0,0,0.5); color: var(--text-white); font-size: 0.9rem; font-family: 'Nunito', sans-serif; outline: none; transition: 0.3s; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.3);}
+        .search-bar:focus { border-color: var(--cute-purple); box-shadow: 0 0 20px rgba(196, 159, 255, 0.15);}
+
+        .results-list { width: 100%; display: flex; flex-direction: column; gap: 12px; padding-bottom: 40px;}
+        .result-card { background: rgba(19, 9, 25, 0.5); border: 1px solid var(--border-soft); border-radius: 20px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.3s; backdrop-filter: blur(10px); animation: slideUp 0.4s ease forwards; opacity: 0;}
+        .result-card:hover { border-color: var(--cute-purple); background: rgba(196, 159, 255, 0.08); transform: translateY(-3px);}
+        .track-info-sm h4 { color: #fff; font-size: 1.05rem; font-family: 'Quicksand', sans-serif; margin-bottom: 3px; font-weight: 700;}
+        .track-info-sm p { color: var(--text-gray); font-size: 0.75rem; font-weight: 700;}
+        .read-badge { background: var(--gradient-main); color: var(--bg-dark); padding: 6px 16px; border-radius: 30px; font-size: 0.75rem; font-weight: 800; transition: 0.3s;}
+
+        /* STAGE 2: APPLE MUSIC LYRICS UI */
+        #lyricsStage { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; animation: fadeIn 0.5s ease; position: relative;}
+        
+        .lyrics-header { width: 90%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--border-soft); margin-bottom: 10px;}
+        .lyrics-titles h2 { font-family: 'Quicksand', sans-serif; font-size: 1.6rem; color: #fff; margin-bottom: 4px; font-weight: 800;}
+        .lyrics-titles p { color: var(--cute-purple); font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;}
+        
+        .lounge-btn { background: var(--gradient-main); color: var(--bg-dark); border: none; padding: 10px 20px; border-radius: 30px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.85rem; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 20px rgba(196, 159, 255, 0.3); display: flex; align-items: center; gap: 8px;}
+        .lounge-btn:hover { transform: scale(1.05); }
+
+        /* The Magic Scroll Box */
+        .lyrics-scroll-box { width: 100%; max-width: 800px; flex-grow: 1; overflow-y: auto; padding: 40vh 20px; scroll-behavior: smooth; position: relative; mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);}
+        .lyrics-scroll-box::-webkit-scrollbar { display: none; } /* Hide scrollbar for clean look */
+        
+        .lyric-line { font-family: 'Quicksand', sans-serif; font-size: 2rem; font-weight: 800; color: var(--text-gray); opacity: 0.3; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); margin-bottom: 25px; text-align: center; cursor: pointer; transform: scale(0.95); line-height: 1.4;}
+        
+        /* The glowing centered line */
+        .lyric-line.active { color: #fff; opacity: 1; transform: scale(1.05); text-shadow: 0 0 20px rgba(255, 158, 189, 0.6); }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <nav class="navbar">
+        <a href="index.html" class="logo">ZoneVaz <span>🎤</span></a>
+        <a href="javascript:goBackToSearch()" class="back-btn" id="navBackBtn">← Back to Search</a>
+    </nav>
+
+    <div class="main-content">
+        
+        <!-- STAGE 1: RAPID API SEARCH -->
+        <div id="searchStage">
+            <h2 class="hero-text">Lyrics Lounge</h2>
+            <p class="sub-text">Search a track to read synced, immersive lyrics.</p>
+            
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-bar" placeholder="Search song & artist... (Press Enter) 🎵" autocomplete="off" onkeypress="handleSearch(event)">
+            </div>
+            
+            <div class="results-list" id="resultsList">
+                <div style="text-align: center; padding: 40px 20px; border: 1px dashed var(--border-soft); border-radius: 20px; margin-top: 10px;">
+                    <p style="color: var(--text-gray); font-size: 0.85rem; font-weight: 600;">Type a song above and hit Enter to pull up the lyrics. ☁️</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- STAGE 2: APPLE MUSIC LYRICS UI -->
+        <div id="lyricsStage">
+            <div class="lyrics-header">
+                <div class="lyrics-titles">
+                    <h2 id="lyricTitle">Song Title</h2>
+                    <p id="lyricArtist">Artist Name</p>
+                </div>
+                <!-- INTEGRATION: OPENS VISUALIZER LOUNGE -->
+                <button class="lounge-btn" onclick="openLounge()">🎧 Play in Lounge</button>
+            </div>
+
+            <div class="lyrics-scroll-box" id="lyricsScrollBox">
+                <!-- Lines will be injected here -->
+                <div style="text-align: center; color: var(--cute-pink); font-weight: 700; font-size: 1.2rem;">Fetching beautiful lyrics... ⏳</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="common.js?v=4"></script>
+    <script>
+        const resultsList = document.getElementById('resultsList');
+        const searchStage = document.getElementById('searchStage');
+        const lyricsStage = document.getElementById('lyricsStage');
+        const lyricsScrollBox = document.getElementById('lyricsScrollBox');
+        
+        let currentTrackData = { id: '', title: '', artist: '' };
+
+        // --- STEP 1: SPOTIFY SEARCH (proxied, no keys in browser) ---
+        async function handleSearch(event) {
+            if (event.key === 'Enter') {
+                const query = document.getElementById('searchInput').value.trim();
+                if (!query) return;
+
+                resultsList.innerHTML = '<p style="color: var(--cute-pink); text-align: center; font-weight: 700; margin-top:20px;">Searching Global Database... ⏳</p>';
+                
+                try {
+                    const data = await ZV.api('/api/search?q=' + encodeURIComponent(query));
+
+                    let tracks = extractTracks(data);
+                    if (!tracks || tracks.length === 0) {
+                        resultsList.innerHTML = '<p style="text-align:center; color:var(--text-gray); margin-top: 20px;">No tracks found. Try another search. 🌧️</p>'; return;
+                    }
+                    renderResults(tracks.slice(0, 8)); 
+                } catch (error) {
+                    resultsList.innerHTML = `<p style="text-align:center; color:#ff4757; font-weight:700; margin-top:20px;">❌ Search failed. Please retry.</p>`;
+                }
+            }
+        }
+
+        function extractTracks(obj) {
+            let res = [];
+            function searchObj(item) {
+                if (res.length > 0) return; 
+                if (Array.isArray(item)) {
+                    if (item.length > 0 && typeof item[0] === 'object' && item[0] !== null) {
+                        let s = item[0];
+                        if ((s && (s.id || s.trackId || s.uri)) && (s && (s.name || s.title || s.trackName))) { res = item; return; }
+                    }
+                    for (let i = 0; i < item.length; i++) searchObj(item[i]);
+                } else if (typeof item === 'object' && item !== null) { for (let key in item) searchObj(item[key]); }
+            }
+            searchObj(obj); return res;
+        }
+
+        function renderResults(tracks) {
+            resultsList.innerHTML = '';
+            tracks.forEach((track, index) => {
+                let rawId = track && (track.id || track.trackId || track.uri); 
+                if(!rawId) return;
+                let trackId = rawId.includes(':') ? rawId.split(':').pop() : rawId;
+                let title = (track && (track.name || track.title)) || "Unknown Track";
+                let artist = (track && track.artists && track.artists[0]) ? (track.artists[0].name || track.artists[0]) : "Unknown Artist";
+                if (typeof artist === 'object') artist = "Unknown Artist";
+
+                let delay = index * 0.08;
+
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                card.style.animationDelay = delay + 's';
+                card.addEventListener('click', () => fetchLyrics(trackId, title, artist));
+
+                const info = document.createElement('div');
+                info.className = 'track-info-sm';
+                const h4 = document.createElement('h4');
+                h4.textContent = title;
+                const p = document.createElement('p');
+                p.textContent = artist;
+                info.appendChild(h4); info.appendChild(p);
+
+                const badge = document.createElement('div');
+                badge.className = 'read-badge';
+                badge.textContent = '🎤 Read Lyrics';
+
+                card.appendChild(info); card.appendChild(badge);
+                resultsList.appendChild(card);
+            });
+        }
+
+        // --- STEP 2: LRCLIB API FETCH (proxied through the server) & UI SWAP ---
+        async function fetchLyrics(id, title, artist) {
+            currentTrackData = { id, title, artist };
+            
+            searchStage.style.display = 'none';
+            lyricsStage.style.display = 'flex';
+            document.getElementById('navBackBtn').innerText = "← New Search";
+            
+            document.getElementById('lyricTitle').innerText = title;
+            document.getElementById('lyricArtist').innerText = artist;
+            lyricsScrollBox.innerHTML = '<div class="lyric-line active" style="font-size:1.5rem;">Connecting to Lyrics Database... ✨</div>';
+
+            try {
+                const query = `${artist} ${title}`;
+                const data = await ZV.api('/api/lyrics?q=' + encodeURIComponent(query));
+
+                if (data && data.length > 0) {
+                    let rawLyrics = data[0].syncedLyrics || data[0].plainLyrics;
+                    
+                    if (rawLyrics) {
+                        // Strip BOTH [mm:ss.xx] and [mm:ss] timestamp formats
+                        let cleanLyrics = rawLyrics.replace(/\[\d{1,2}:\d{2}(?:[.:]\d{1,3})?\]/g, '');
+                        renderAppleMusicLyrics(cleanLyrics);
+                    } else {
+                        throw new Error("No lyrics payload");
+                    }
+                } else {
+                    throw new Error("No exact match found");
+                }
+            } catch (err) {
+                renderAppleMusicLyrics("🎵 (Instrumental or Unreleased Track)\n\nClose your eyes.\nFeel the aesthetic vibe.\nNo words needed here.\n\n✨");
+            }
+        }
+
+        // --- STEP 3: THE APPLE MUSIC SCROLL SPY MAGIC ---
+        function renderAppleMusicLyrics(lyricsText) {
+            lyricsScrollBox.innerHTML = '';
+            
+            const lines = lyricsText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+
+            lines.forEach((line, index) => {
+                const div = document.createElement('div');
+                div.className = 'lyric-line';
+                div.textContent = line; // textContent = XSS-safe
+                
+                div.onclick = () => {
+                    div.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                };
+                
+                lyricsScrollBox.appendChild(div);
+            });
+
+            updateActiveLyric();
+        }
+
+        function updateActiveLyric() {
+            const lines = document.querySelectorAll('.lyric-line');
+            if (lines.length === 0) return;
+
+            const boxRect = lyricsScrollBox.getBoundingClientRect();
+            const boxCenter = boxRect.top + (boxRect.height / 2);
+
+            let closestLine = null;
+            let minDistance = Infinity;
+
+            lines.forEach(line => {
+                const rect = line.getBoundingClientRect();
+                const lineCenter = rect.top + (rect.height / 2);
+                const distance = Math.abs(boxCenter - lineCenter);
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestLine = line;
+                }
+            });
+
+            lines.forEach(line => line.classList.remove('active'));
+            if (closestLine) {
+                closestLine.classList.add('active');
+            }
+        }
+
+        lyricsScrollBox.addEventListener('scroll', updateActiveLyric);
+
+        // --- STEP 4: VISUALIZER INTEGRATION ---
+        function openLounge() {
+            if (!currentTrackData.id) return;
+            const url = `lounge.html?id=${encodeURIComponent(currentTrackData.id)}&title=${encodeURIComponent(currentTrackData.title)}&artist=${encodeURIComponent(currentTrackData.artist)}`;
+            window.open(url, '_blank');
+        }
+
+        function goBackToSearch() {
+            lyricsStage.style.display = 'none';
+            searchStage.style.display = 'flex';
+            document.getElementById('navBackBtn').innerText = "← Back to Hub";
+            lyricsScrollBox.innerHTML = '';
+        }
+    </script>
+</body>
+</html>

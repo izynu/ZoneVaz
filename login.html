@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZoneVaz ✨ - Auth</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-dark: #0c0511; --card-bg: rgba(19, 9, 25, 0.6); --border-soft: rgba(255, 255, 255, 0.1); --text-white: #e9e3ee; --text-gray: #776d82; --cute-pink: #ff9ebd; --cute-purple: #c49fff; --gradient-main: linear-gradient(90deg, #d38dff, #ffacc0); }
+        body.theme-cyber { --bg-dark: #050a14; --card-bg: rgba(9, 16, 36, 0.7); --border-soft: rgba(0, 255, 255, 0.15); --text-white: #e0fbfc; --text-gray: #6b8a9c; --cute-pink: #00ffff; --cute-purple: #ff00ff; --gradient-main: linear-gradient(90deg, #00ffff, #ff00ff); }
+        body.theme-sakura { --bg-dark: #1a0e13; --card-bg: rgba(38, 20, 28, 0.7); --border-soft: rgba(255, 183, 197, 0.15); --text-white: #fff0f5; --text-gray: #b595a2; --cute-pink: #ffb7c5; --cute-purple: #ff9ebd; --gradient-main: linear-gradient(90deg, #ff9ebd, #ffb7c5); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: var(--bg-dark); color: var(--text-white); font-family: 'Nunito', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; height: 100dvh; overflow: hidden; }
+        
+        .ambient-glow { position: absolute; filter: blur(120px); opacity: 0.15; border-radius: 50%; pointer-events: none; animation: float 10s infinite ease-in-out alternate;}
+        .glow-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--cute-pink); }
+        .glow-2 { bottom: -10%; right: -10%; width: 50vw; height: 50vw; background: var(--cute-purple); animation-delay: -5s;}
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 50px) scale(1.1); } }
+
+        .auth-card { width: 90%; max-width: 400px; padding: 40px 35px; background: var(--card-bg); backdrop-filter: blur(20px); border: 1px solid var(--border-soft); border-radius: 30px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 10; animation: popIn 0.5s ease;}
+        @keyframes popIn { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+
+        .logo { font-family: 'Quicksand', sans-serif; font-size: 1.8rem; font-weight: 700; color: #fff; margin-bottom: 20px; }
+        .logo span { color: var(--cute-pink); }
+
+        .auth-tabs { display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; border-bottom: 1px solid var(--border-soft); padding-bottom: 10px;}
+        .tab { font-size: 0.9rem; font-weight: 700; color: var(--text-gray); cursor: pointer; transition: 0.3s; }
+        .tab.active { color: var(--cute-pink); border-bottom: 2px solid var(--cute-pink); padding-bottom: 5px;}
+
+        .auth-form { display: none; flex-direction: column; gap: 15px; text-align: left; animation: fadeIn 0.3s ease;}
+        .auth-form.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .form-input { width: 100%; padding: 12px 20px; border-radius: 15px; border: 1px solid var(--border-soft); background: rgba(0,0,0,0.4); color: #fff; font-family: 'Nunito', sans-serif; font-size: 0.9rem; outline: none; transition: 0.3s;}
+        .form-input:focus { border-color: var(--cute-pink); background: rgba(0,0,0,0.6); }
+
+        .avatar-label { font-size: 0.75rem; color: var(--text-gray); font-weight: 700; text-align: center; margin-bottom: 5px; display: block;}
+        .avatar-grid { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); border: 2px solid transparent; cursor: pointer; transition: 0.3s; }
+        .avatar.active { border-color: var(--cute-pink); background: rgba(255, 158, 189, 0.1); transform: scale(1.1);}
+
+        .btn-main { width: 100%; background: var(--gradient-main); color: var(--bg-dark); border: none; padding: 14px; border-radius: 30px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 158, 189, 0.3); }
+
+        .error-msg { color: #ff4757; font-size: 0.75rem; font-weight: 700; text-align: center; display: none; margin-top: 10px;}
+        .back-link { display: block; margin-top: 20px; color: var(--text-gray); font-size: 0.75rem; text-decoration: none; font-weight: 600; text-align: center;}
+        .remember-row { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-gray); font-weight: 600; cursor: pointer; user-select: none; }
+        .remember-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--cute-pink); cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <div class="auth-card">
+        <div class="logo">ZoneVaz <span>✨</span></div>
+
+        <div class="auth-tabs">
+            <div class="tab active" onclick="switchTab('login', this)">Sign In</div>
+            <div class="tab" onclick="switchTab('register', this)">Sign Up</div>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <div id="form-login" class="auth-form active">
+            <input type="email" id="logEmail" class="form-input" placeholder="Email Address">
+            <input type="password" id="logPass" class="form-input" placeholder="Password">
+            <label class="remember-row"><input type="checkbox" id="logRemember" checked> <span>Remember me for 30 days</span></label>
+            <button class="btn-main" onclick="handleLogin()">Sign In</button>
+            <div id="logError" class="error-msg">Invalid email or password!</div>
+        </div>
+
+        <!-- REGISTER FORM -->
+        <div id="form-register" class="auth-form">
+            <span class="avatar-label">Choose your Vibe</span>
+            <div class="avatar-grid">
+                <div class="avatar active" onclick="selectAvatar(this, '🌸')">🌸</div>
+                <div class="avatar" onclick="selectAvatar(this, '🎧')">🎧</div>
+                <div class="avatar" onclick="selectAvatar(this, '🦋')">🦋</div>
+                <div class="avatar" onclick="selectAvatar(this, '🪐')">🪐</div>
+            </div>
+            <input type="text" id="regName" class="form-input" placeholder="Display Name">
+            <input type="email" id="regEmail" class="form-input" placeholder="Email Address">
+            <input type="password" id="regPass" class="form-input" placeholder="Password (min 6 characters)">
+            <label class="remember-row"><input type="checkbox" id="regRemember" checked> <span>Remember me for 30 days</span></label>
+            <button class="btn-main" onclick="handleRegister()">Create Account</button>
+            <div id="regError" class="error-msg">Please fill all fields!</div>
+        </div>
+
+        <a href="index.html" class="back-link">Return to Hub</a>
+    </div>
+
+    <script src="common.js?v=4"></script>
+    <script>
+        let selectedAvatar = '🌸';
+
+        function switchTab(tab, el) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+
+            if (el) el.classList.add('active');
+            document.getElementById('form-' + tab).classList.add('active');
+            document.querySelectorAll('.error-msg').forEach(e => e.style.display = 'none');
+        }
+
+        function selectAvatar(element, icon) {
+            document.querySelectorAll('.avatar').forEach(av => av.classList.remove('active'));
+            element.classList.add('active');
+            selectedAvatar = icon;
+        }
+
+        function showError(id, msg) {
+            const err = document.getElementById(id);
+            err.innerText = msg;
+            err.style.display = 'block';
+        }
+
+        async function handleRegister() {
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const pass = document.getElementById('regPass').value;
+
+            if(!name || !email || !pass) { showError('regError', 'Please fill all fields!'); return; }
+
+            try {
+                await ZV.bootstrap(); // ensure CSRF token exists
+                await ZV.api('/api/register', {
+                    method: 'POST',
+                    body: { name, email, pass, avatar: selectedAvatar, remember: document.getElementById('regRemember').checked }
+                });
+                window.location.href = 'index.html';
+            } catch (e) {
+                showError('regError', e.message || 'Registration failed. Please try again.');
+            }
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('logEmail').value.trim();
+            const pass = document.getElementById('logPass').value;
+            const err = document.getElementById('logError');
+
+            try {
+                await ZV.bootstrap(); // ensure CSRF token exists
+                await ZV.api('/api/login', {
+                    method: 'POST',
+                    body: { email, pass, remember: document.getElementById('logRemember').checked }
+                });
+                window.location.href = 'index.html';
+            } catch (e) {
+                err.innerText = e.message || 'Invalid email or password!';
+                err.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

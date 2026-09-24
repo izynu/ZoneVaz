@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZoneVaz 📥 - Download Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --bg-dark: #0c0511; --card-bg: #130919; --border-soft: rgba(255, 255, 255, 0.1); --text-white: #e9e3ee; --text-gray: #776d82; --cute-pink: #ff9ebd; --cute-purple: #c49fff; --gradient-main: linear-gradient(90deg, #d38dff, #ffacc0); }
+        body.theme-cyber { --bg-dark: #050a14; --card-bg: #091024; --border-soft: rgba(0, 255, 255, 0.15); --text-white: #e0fbfc; --text-gray: #6b8a9c; --cute-pink: #00ffff; --cute-purple: #ff00ff; --gradient-main: linear-gradient(90deg, #00ffff, #ff00ff); }
+        body.theme-sakura { --bg-dark: #1a0e13; --card-bg: #26141c; --border-soft: rgba(255, 183, 197, 0.15); --text-white: #fff0f5; --text-gray: #b595a2; --cute-pink: #ffb7c5; --cute-purple: #ff9ebd; --gradient-main: linear-gradient(90deg, #ff9ebd, #ffb7c5); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: var(--bg-dark); color: var(--text-white); font-family: 'Nunito', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; height: 100dvh; overflow: hidden; }
+        
+        .ambient-glow { position: absolute; filter: blur(120px); opacity: 0.15; border-radius: 50%; pointer-events: none; }
+        .glow-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--cute-pink); }
+        .glow-2 { bottom: -10%; right: -10%; width: 50vw; height: 50vw; background: var(--cute-purple); }
+
+        .dl-card { width: 90%; max-width: 470px; max-height: 96vh; overflow-y: auto; padding: 40px 35px; background: var(--card-bg); backdrop-filter: blur(20px); border: 1px solid var(--cute-pink); border-radius: 30px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 10; animation: popIn 0.4s ease; }
+        .dl-card::-webkit-scrollbar { width: 4px; }
+        .dl-card::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 10px; }
+        @keyframes popIn { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+
+        .logo { font-family: 'Quicksand', sans-serif; font-size: 1.5rem; font-weight: 700; color: #fff; margin-bottom: 20px; }
+        .logo span { color: var(--cute-pink); }
+
+        /* Quota bar */
+        .quota-box { border: 1px solid var(--border-soft); background: rgba(0,0,0,0.3); border-radius: 16px; padding: 14px 18px; margin-bottom: 22px; text-align: left; }
+        .quota-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .quota-label { font-size: 0.7rem; font-weight: 700; color: var(--text-gray); text-transform: uppercase; letter-spacing: 0.5px; }
+        .quota-num { font-size: 0.8rem; font-weight: 800; color: var(--cute-pink); }
+        .quota-track { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+        .quota-fill { height: 100%; width: 0%; background: var(--gradient-main); border-radius: 3px; transition: width 0.5s ease; }
+        .quota-login { margin-top: 10px; }
+
+        .track-info { margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid var(--border-soft); }
+        .track-info h2 { font-family: 'Quicksand', sans-serif; font-size: 1.4rem; color: #fff; margin-bottom: 5px; line-height: 1.3; }
+        .track-info p { color: var(--cute-pink); font-weight: 600; font-size: 0.9rem; }
+
+        .quality-options { display: flex; flex-direction: column; gap: 15px; }
+        .btn-dl { width: 100%; background: rgba(0,0,0,0.4); color: var(--text-white); border: 1px solid var(--border-soft); padding: 15px; border-radius: 20px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: 0.3s; display: flex; justify-content: space-between; align-items: center; }
+        .btn-dl:hover { border-color: var(--cute-pink); background: rgba(255,158,189,0.05); transform: translateY(-2px); }
+        .btn-dl span.badge { background: var(--gradient-main); color: var(--bg-dark); padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; }
+        
+        .loading-state { display: none; margin-top: 20px; font-weight: 700; color: var(--cute-pink); font-size: 0.9rem; }
+        
+        .status-log { display: none; margin-top: 15px; background: rgba(0,0,0,0.35); border: 1px solid var(--border-soft); border-radius: 14px; padding: 12px 16px; text-align: left; max-height: 150px; overflow-y: auto; }
+        .status-log::-webkit-scrollbar { width: 4px; }
+        .status-log::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 10px; }
+        .status-line { font-size: 0.72rem; color: var(--text-gray); font-weight: 600; padding: 2px 0; display: flex; gap: 6px; align-items: center; }
+        .status-line .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cute-pink); flex-shrink: 0; animation: blink 1s infinite alternate; }
+        .status-line.done .dot { background: #1DB954; animation: none; }
+        .status-line.fail .dot { background: #ff4757; animation: none; }
+        .status-line.done { color: var(--text-white); }
+        @keyframes blink { from { opacity: 0.3; } to { opacity: 1; } }
+        
+        .back-link { display: block; margin-top: 25px; color: var(--text-gray); font-size: 0.8rem; text-decoration: none; font-weight: 600; transition: 0.2s;}
+        .back-link:hover { color: var(--cute-pink); }
+        
+        .progress-container { width: 100%; background: rgba(255,255,255,0.1); border-radius: 10px; height: 6px; margin-top: 15px; display: none; overflow: hidden;}
+        .progress-bar { height: 100%; width: 0%; background: var(--gradient-main); transition: width 0.3s; }
+
+        .link-btn { display: inline-block; border: 1px solid var(--cute-pink); color: var(--cute-pink); background: transparent; padding: 8px 18px; border-radius: 30px; font-size: 0.75rem; font-weight: 700; text-decoration: none; transition: 0.3s; cursor: pointer; }
+        .link-btn:hover { background: rgba(255,158,189,0.1); }
+
+        /* --- GUEST LIMIT POPUP MODAL --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 2000; align-items: center; justify-content: center; animation: popIn 0.3s ease; padding: 20px;}
+        .modal-wrapper { position: relative; width: 100%; max-width: 400px;}
+        .close-modal { position: absolute; top: -40px; right: 0; color: #fff; font-size: 2rem; cursor: pointer; background: transparent; border: none; transition: 0.2s; z-index: 10;}
+        .close-modal:hover { color: var(--cute-pink); transform: scale(1.1);}
+        .form-card { width: 100%; padding: 35px 25px; background: var(--card-bg); border: 1px solid var(--cute-pink); border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.5); text-align: center;}
+        .form-card h2 { font-family: 'Quicksand', sans-serif; color: var(--cute-pink); margin-bottom: 8px; font-size: 1.5rem;}
+        .form-card p { color: var(--text-gray); font-size: 0.85rem; line-height: 1.6; margin-bottom: 20px;}
+        .btn-main { width: 100%; background: var(--gradient-main); color: var(--bg-dark); border: none; padding: 14px; border-radius: 30px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 158, 189, 0.3); }
+        .btn-ghost { background: transparent; border: 1px solid var(--text-gray); color: var(--text-gray); margin-top: 10px; }
+        .btn-ghost:hover { transform: none; box-shadow: none; }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <!-- GUEST LIMIT POPUP -->
+    <div class="modal-overlay" id="limitModal">
+        <div class="modal-wrapper">
+            <button class="close-modal" onclick="closeLimitModal()">&times;</button>
+            <div class="form-card">
+                <h2>Limit Reached! 🛑</h2>
+                <p id="limitMsg">
+                    You've used all <strong>3 free downloads</strong> for today.<br><br>
+                    Log in or create a free account to unlock <strong>20 downloads every day</strong> 🎧
+                </p>
+                <button class="btn-main" onclick="window.location.href='login.html'">Login / Sign Up</button>
+                <button class="btn-main btn-ghost" onclick="closeLimitModal()">Maybe Later</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dl-card">
+        <div class="logo">ZoneVaz <span>Studio</span></div>
+
+        <!-- DAILY QUOTA STATUS -->
+        <div class="quota-box">
+            <div class="quota-row">
+                <span class="quota-label" id="quotaLabel">Loading your limit...</span>
+                <span class="quota-num" id="quotaNum">…</span>
+            </div>
+            <div class="quota-track"><div class="quota-fill" id="quotaFill"></div></div>
+            <div class="quota-login" id="quotaLoginWrap" style="display:none;">
+                <a href="login.html" class="link-btn">🔓 Log in for 20 downloads/day</a>
+            </div>
+        </div>
+        
+        <div class="track-info">
+            <h2 id="dispTitle">Loading Title...</h2>
+            <p id="dispArtist">Loading Artist...</p>
+            
+            <div id="playerBox" style="margin-top: 20px; display: none;">
+                <!-- Spotify embed loads here -->
+            </div>
+        </div>
+
+        <div class="quality-options" id="optContainer">
+            <button class="btn-dl" onclick="processDownload('128')">
+                <div>Standard Quality (128kbps) 🎵</div>
+                <span class="badge" style="background: #e9e3ee;">Fast</span>
+            </button>
+            <button class="btn-dl" onclick="processDownload('320')" style="border-color: var(--cute-purple);">
+                <div>Studio Quality (320kbps) 🎧</div>
+                <span class="badge">HD MP3</span>
+            </button>
+        </div>
+
+        <div class="loading-state" id="loader">
+            <p id="loaderText">Preparing your download... ⏳</p>
+            <div class="progress-container" id="progContainer">
+                <div class="progress-bar" id="progBar"></div>
+            </div>
+        </div>
+
+        <!-- LIVE BACKEND STATUS (friendly wording) -->
+        <div class="status-log" id="statusLog"></div>
+
+        <a href="javascript:window.close();" class="back-link">← Close Tab & Return</a>
+    </div>
+
+    <script src="common.js?v=4"></script>
+    <script>
+        // Parse URL Parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const trackId = urlParams.get('id');
+        const title = urlParams.get('title') || "Unknown Track";
+        const artist = urlParams.get('artist') || "Unknown Artist";
+
+        document.getElementById('dispTitle').innerText = title;
+        document.getElementById('dispArtist').innerText = artist;
+
+        if (trackId && !trackId.startsWith('z')) {
+            document.getElementById('playerBox').style.display = 'block';
+            document.getElementById('playerBox').innerHTML = `<iframe src="https://open.spotify.com/embed/track/${encodeURIComponent(trackId)}?utm_source=generator&theme=0" width="100%" height="80" frameBorder="0" allowfullscreen="" style="border-radius: 10px;" title="Spotify player"></iframe>`;
+        }
+
+        // --- Friendly status logger ---
+        const statusLog = document.getElementById('statusLog');
+        function logStatus(text, state) {
+            statusLog.style.display = 'block';
+            const line = document.createElement('div');
+            line.className = 'status-line' + (state === 'done' ? ' done' : (state === 'fail' ? ' fail' : ''));
+            const dot = document.createElement('span');
+            dot.className = 'dot';
+            const label = document.createElement('span');
+            label.textContent = text;
+            line.appendChild(dot); line.appendChild(label);
+            statusLog.appendChild(line);
+            statusLog.scrollTop = statusLog.scrollHeight;
+        }
+
+        // --- Guest limit popup ---
+        function openLimitModal(msg) {
+            if (msg) document.getElementById('limitMsg').innerHTML = msg;
+            document.getElementById('limitModal').style.display = 'flex';
+        }
+        function closeLimitModal() {
+            document.getElementById('limitModal').style.display = 'none';
+        }
+
+        // --- Daily quota on load ---
+        async function loadQuota() {
+            try {
+                const q = await ZV.api('/api/quota');
+                const label = q.loggedIn
+                    ? (q.isUser ? 'Your daily limit' : 'Guest daily limit')
+                    : (q.isUser ? 'Key limit' : 'Guest daily limit');
+                document.getElementById('quotaLabel').innerText = label;
+                document.getElementById('quotaNum').innerText = q.used + ' / ' + q.limit + ' used';
+                const pct = Math.min(100, Math.round((q.used / q.limit) * 100));
+                document.getElementById('quotaFill').style.width = pct + '%';
+                if (!q.loggedIn && !q.isUser) {
+                    // Guests always see the upgrade CTA
+                    document.getElementById('quotaLoginWrap').style.display = 'block';
+                }
+            } catch (e) {}
+        }
+        loadQuota();
+
+        async function processDownload(quality) {
+            if (!trackId) { alert("Invalid Track ID!"); return; }
+
+            document.getElementById('optContainer').style.display = 'none';
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('loaderText').style.color = "var(--cute-pink)";
+            statusLog.innerHTML = '';
+
+            try {
+                logStatus("Processing request...");
+                const info = await fetch('/api/download?id=' + encodeURIComponent(trackId) + '&title=' + encodeURIComponent(title) + '&artist=' + encodeURIComponent(artist));
+                const infoData = await info.json();
+                if (!info.ok) throw infoData.error || 'Download failed';
+                const link = infoData.link;
+
+                logStatus("Locating track source...");
+                document.getElementById('loaderText').innerText = `Downloading ${quality}kbps Track... 📥`;
+                document.getElementById('progContainer').style.display = 'block';
+                document.getElementById('progBar').style.width = '40%';
+
+                logStatus("Fetching audio stream...");
+                const fileRes = await fetch('/api/stream?url=' + encodeURIComponent(link));
+                if (!fileRes.ok) throw new Error("Stream failed");
+                const blob = await fileRes.blob();
+
+                document.getElementById('progBar').style.width = '100%';
+                document.getElementById('loaderText').innerText = "Download Complete! ✅";
+                logStatus("Preparing your file...", 'done');
+                logStatus("Saved to your device! ✅", 'done');
+
+                const blobUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = blobUrl;
+                a.download = `${title} - ZoneVaz (${quality}kbps).mp3`;
+                document.body.appendChild(a);
+                a.click();
+
+                window.URL.revokeObjectURL(blobUrl);
+                document.body.removeChild(a);
+
+                // Refresh quota display
+                loadQuota();
+
+                setTimeout(() => {
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('optContainer').style.display = 'flex';
+                }, 2000);
+
+            } catch (error) {
+                const msg = (error && error.message) ? error.message : String(error);
+                if (/limit reached|Guest limit|Daily download limit/i.test(msg)) {
+                    // Show the login popup for guests / members hitting the limit
+                    document.getElementById('loaderText').innerText = "🚫 Limit reached for today.";
+                    openLimitModal();
+                } else {
+                    document.getElementById('loaderText').innerText = "❌ Download failed. Please try again.";
+                    logStatus("Something went wrong — try again.", 'fail');
+                }
+                document.getElementById('loaderText').style.color = "#ff4757";
+                setTimeout(() => {
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('optContainer').style.display = 'flex';
+                    document.getElementById('loaderText').style.color = "var(--cute-pink)";
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZoneVaz 🔮 - Interactive Lounge</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+
+    <script>
+        // Apply cached palette instantly (server-synced)
+        try {
+            const cached = JSON.parse(localStorage.getItem('zonevaz_palette_cache'));
+            if (cached) {
+                document.documentElement.style.setProperty('--cute-pink', cached.pink || '#ff9ebd');
+                document.documentElement.style.setProperty('--cute-purple', cached.purple || '#c49fff');
+                document.documentElement.style.setProperty('--bg-dark', cached.bg || '#0c0511');
+                document.documentElement.style.setProperty('--card-bg', cached.card || '#130919');
+            }
+        } catch (e) {}
+    </script>
+
+    <style>
+        :root { 
+            --bg-dark: #0c0511; 
+            --card-bg: rgba(19, 9, 25, 0.75); 
+            --border-soft: rgba(255, 255, 255, 0.08); 
+            --text-white: #e9e3ee; 
+            --text-gray: #776d82; 
+            --cute-pink: #ff9ebd; 
+            --cute-purple: #c49fff; 
+            --gradient-main: linear-gradient(90deg, var(--cute-purple), var(--cute-pink)); 
+        }
+        body.theme-cyber { --bg-dark: #050a14; --card-bg: rgba(9, 16, 36, 0.75); --border-soft: rgba(0, 255, 255, 0.15); --text-white: #e0fbfc; --text-gray: #6b8a9c; --cute-pink: #00ffff; --cute-purple: #ff00ff; --gradient-main: linear-gradient(90deg, #00ffff, #ff00ff); }
+        body.theme-sakura { --bg-dark: #1a0e13; --card-bg: rgba(38, 20, 28, 0.75); --border-soft: rgba(255, 183, 197, 0.15); --text-white: #fff0f5; --text-gray: #b595a2; --cute-pink: #ffb7c5; --cute-purple: #ff9ebd; --gradient-main: linear-gradient(90deg, #ff9ebd, #ffb7c5); }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none;}
+        body { background-color: var(--bg-dark); color: var(--text-white); font-family: 'Nunito', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        .ambient-glow { position: fixed; filter: blur(140px); opacity: 0.15; z-index: -1; border-radius: 50%; pointer-events: none; transition: opacity 0.5s ease;}
+        .glow-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--cute-purple); }
+        .glow-2 { bottom: -10%; right: -10%; width: 50vw; height: 50vw; background: var(--cute-pink); }
+
+        #visualizerCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; cursor: crosshair;}
+
+        /* Centered Glass Card */
+        .vis-controls { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 14px; background: var(--card-bg); padding: 32px 35px; border-radius: 30px; border: 1px solid var(--border-soft); backdrop-filter: blur(25px); box-shadow: 0 15px 50px rgba(0,0,0,0.6); width: 90%; max-width: 380px; transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);}
+        
+        /* Floating dock state when music is live */
+        .vis-controls.playing { top: auto; bottom: 25px; transform: translateX(-50%); padding: 16px 25px; flex-direction: row; justify-content: space-between; max-width: 550px; background: rgba(12, 5, 17, 0.6); box-shadow: 0 10px 40px rgba(255, 158, 189, 0.1);}
+
+        .vis-header { text-align: center; }
+        .vis-controls.playing .vis-header { text-align: left; }
+
+        .vis-track-title { font-family: 'Quicksand', sans-serif; font-size: 1.4rem; color: #fff; font-weight: 800; letter-spacing: 0.5px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);}
+        .vis-controls.playing .vis-track-title { font-size: 1.1rem; }
+        
+        .vis-track-artist { font-size: 0.8rem; color: var(--cute-pink); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;}
+        .vis-controls.playing .vis-track-artist { font-size: 0.7rem; }
+        
+        .btn-action { background: var(--gradient-main); color: var(--bg-dark); border: none; padding: 12px 28px; border-radius: 30px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 20px rgba(255, 158, 189, 0.3); width: 100%;}
+        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255, 158, 189, 0.5);}
+        .vis-controls.playing .btn-action { width: auto; padding: 8px 20px; font-size: 0.8rem;}
+
+        .btn-close { background: transparent; border: 1px solid var(--border-soft); color: var(--text-gray); padding: 9px 20px; border-radius: 30px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: 0.3s; width: 100%;}
+        .btn-close:hover { border-color: #ff4757; color: #ff4757; background: rgba(255, 71, 87, 0.1);}
+        .vis-controls.playing .btn-close { width: auto; padding: 8px 16px; }
+
+        /* Progress Bar */
+        .progress-bar-container { width: 100%; height: 5px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden; margin: 6px 0;}
+        .progress-bar { height: 100%; width: 0%; background: var(--gradient-main); transition: width 0.3s ease; }
+
+        .status-badge { font-size: 0.85rem; color: var(--text-white); font-weight: 700; margin-top: 5px; animation: pulse 1s infinite alternate;}
+        .error-badge { color: #ff4757; font-weight: 800; font-size: 0.75rem; display: none; text-transform: uppercase; letter-spacing: 1px;}
+        
+        @keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <canvas id="visualizerCanvas"></canvas>
+    
+    <div class="vis-controls" id="controlPanel">
+        <div class="vis-header">
+            <div class="vis-track-title" id="visTitle">Loading Track...</div>
+            <div class="vis-track-artist" id="visArtist">Please Wait</div>
+            <div class="status-badge" id="statusText">Connecting Engine...</div>
+            <div class="error-badge" id="errorMsg"></div>
+        </div>
+        
+        <div class="progress-bar-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <button class="btn-action" id="startBtn" style="display: none;" onclick="igniteVisualizer()">▶ Tap to Start Visualizer</button>
+        <button class="btn-close" onclick="window.close()">⏹ Close Hub</button>
+    </div>
+
+    <script src="common.js?v=4"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const trackId = urlParams.get('id');
+        const title = urlParams.get('title') || "Unknown Track";
+        const artist = urlParams.get('artist') || "Unknown Artist";
+
+        document.getElementById('visTitle').innerText = title;
+        document.getElementById('visArtist').innerText = artist;
+
+        const controlPanel = document.getElementById('controlPanel');
+        const startBtn = document.getElementById('startBtn');
+        const statusText = document.getElementById('statusText');
+        const errorMsg = document.getElementById('errorMsg');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+
+        const rootStyles = getComputedStyle(document.documentElement);
+        const themePink = rootStyles.getPropertyValue('--cute-pink').trim() || '#ff9ebd';
+        const themePurple = rootStyles.getPropertyValue('--cute-purple').trim() || '#c49fff';
+
+        const canvas = document.getElementById('visualizerCanvas');
+        const ctx = canvas.getContext('2d');
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize);
+        resize();
+
+        let mouseX = canvas.width / 2, mouseY = canvas.height / 2;
+        window.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+        window.addEventListener('touchmove', (e) => { mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; }, { passive: true });
+
+        let idleParticles = Array.from({length: 45}, () => ({
+            x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+            r: Math.random() * 2 + 1, dx: (Math.random() - 0.5) * 1.5, dy: (Math.random() - 0.5) * 1.5,
+            color: Math.random() > 0.5 ? themePink : themePurple
+        }));
+
+        let isMusicPlaying = false;
+        let animFrame;
+
+        function drawIdle() {
+            if (isMusicPlaying) return;
+            animFrame = requestAnimationFrame(drawIdle);
+            ctx.fillStyle = 'rgba(12, 5, 17, 0.35)'; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            idleParticles.forEach(p => {
+                let dx = mouseX - p.x, dy = mouseY - p.y;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 100) { p.x -= dx * 0.04; p.y -= dy * 0.04; }
+                p.x += p.dx; p.y += p.dy;
+                if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+            });
+        }
+        drawIdle();
+
+        let audioCtx, analyser, audioBuffer, bufferSource;
+
+        // roundRect fallback for older browsers (Chrome < 99, Safari < 16)
+        function drawRoundedRect(c, x, y, w, h, r) {
+            if (typeof c.roundRect === 'function') {
+                c.roundRect(x, y, w, h, r);
+                return;
+            }
+            r = Math.min(r, h / 2, w / 2);
+            c.moveTo(x + r, y);
+            c.lineTo(x + w - r, y);
+            c.quadraticCurveTo(x + w, y, x + w, y + r);
+            c.lineTo(x + w, y + h - r);
+            c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            c.lineTo(x + r, y + h);
+            c.quadraticCurveTo(x, y + h, x, y + h - r);
+            c.lineTo(x, y + r);
+            c.quadraticCurveTo(x, y, x + r, y);
+            c.closePath();
+        }
+
+        async function prepareAudio() {
+            if (!trackId) {
+                statusText.innerText = "No Track Selected";
+                return;
+            }
+
+            // PHASE 1: ASK THE SECURE SERVER FOR A DIRECT LINK (keys stay server-side)
+            try {
+                statusText.innerText = "Connecting Engine... ⏳";
+                progressBar.style.width = "20%";
+                errorMsg.style.display = 'none';
+
+                const infoRes = await fetch('/api/download?id=' + encodeURIComponent(trackId));
+                const infoData = await infoRes.json();
+                if (!infoRes.ok || !infoData.link) throw new Error(infoData.error || 'No link');
+                const link = infoData.link;
+
+                // PHASE 2: FETCH RAW AUDIO THROUGH THE SAME-ORIGIN STREAM PROXY (no CORS blocking)
+                progressBar.style.width = "50%";
+                statusText.innerText = "Buffering studio audio... 🎵";
+
+                const audioFetch = await fetch('/api/stream?url=' + encodeURIComponent(link));
+                if(!audioFetch.ok) throw new Error("Audio Download Failed");
+                
+                const rawBuffer = await audioFetch.arrayBuffer();
+
+                progressBar.style.width = "85%";
+                statusText.innerText = "Decoding aesthetic spectrum... ⚡";
+
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                audioBuffer = await audioCtx.decodeAudioData(rawBuffer);
+
+                progressBar.style.width = "100%";
+                setTimeout(() => progressContainer.style.display = 'none', 400);
+
+                statusText.style.color = "var(--cute-pink)";
+                statusText.innerText = "✨ Ready for the vibe!";
+                startBtn.style.display = 'block';
+
+            } catch (err) {
+                console.error(err);
+                progressContainer.style.display = 'none';
+                statusText.style.display = 'none';
+                errorMsg.innerText = "❌ TRACK UNAVAILABLE OR API LIMIT REACHED.";
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        function igniteVisualizer() {
+            if (!audioBuffer) return;
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            bufferSource = audioCtx.createBufferSource();
+            bufferSource.buffer = audioBuffer;
+            bufferSource.loop = true;
+
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 512;
+            analyser.smoothingTimeConstant = 0.85;
+
+            bufferSource.connect(analyser);
+            analyser.connect(audioCtx.destination);
+
+            bufferSource.start(0);
+            isMusicPlaying = true;
+            cancelAnimationFrame(animFrame);
+
+            controlPanel.classList.add('playing');
+            statusText.style.display = 'none';
+            startBtn.style.display = 'none';
+
+            startVisLoop();
+        }
+
+        let activeParticles = [];
+
+        function startVisLoop() {
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function render() {
+                if (!isMusicPlaying) return;
+                requestAnimationFrame(render);
+
+                analyser.getByteFrequencyData(dataArray);
+
+                ctx.fillStyle = 'rgba(12, 5, 17, 0.25)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2 - 40; 
+                const bars = 100; 
+                const angleStep = (Math.PI * 2) / bars;
+
+                const bassAvg = (dataArray[0] + dataArray[1] + dataArray[2] + dataArray[3]) / 4;
+                const radius = 100 + (bassAvg / 2);
+
+                let auraGrad = ctx.createRadialGradient(cx, cy, radius * 0.5, cx, cy, radius * 1.5);
+                auraGrad.addColorStop(0, `rgba(255, 158, 189, ${bassAvg / 400})`);
+                auraGrad.addColorStop(1, 'rgba(12, 5, 17, 0)');
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius * 1.5, 0, 2 * Math.PI);
+                ctx.fillStyle = auraGrad;
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius - 15, 0, 2 * Math.PI);
+                ctx.fillStyle = `rgba(19, 9, 25, 0.8)`;
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = themePink;
+                ctx.stroke();
+
+                for (let i = 0; i < bars; i++) {
+                    const dataIndex = Math.floor(i * (bufferLength / 1.5) / bars);
+                    const barHeight = (dataArray[dataIndex] || 0) * 1.2;
+                    
+                    ctx.save();
+                    ctx.translate(cx, cy);
+                    ctx.rotate(i * angleStep);
+
+                    let barGrad = ctx.createLinearGradient(0, radius, 0, radius + barHeight);
+                    barGrad.addColorStop(0, themePink);
+                    barGrad.addColorStop(1, themePurple);
+
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = themePink;
+
+                    ctx.fillStyle = barGrad;
+                    ctx.beginPath();
+                    drawRoundedRect(ctx, -2, radius, 4, Math.max(2, barHeight), 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                if (bassAvg > 210) { 
+                    for(let i=0; i<3; i++) {
+                        const pAngle = Math.random() * Math.PI * 2;
+                        const speed = Math.random() * 4 + 2;
+                        activeParticles.push({
+                            x: cx + Math.cos(pAngle) * radius,
+                            y: cy + Math.sin(pAngle) * radius,
+                            vx: Math.cos(pAngle) * speed,
+                            vy: Math.sin(pAngle) * speed,
+                            life: 1,
+                            color: Math.random() > 0.5 ? themePink : themePurple
+                        });
+                    }
+                }
+
+                for (let i = activeParticles.length - 1; i >= 0; i--) {
+                    let p = activeParticles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life -= 0.02;
+
+                    if (p.life <= 0) {
+                        activeParticles.splice(i, 1);
+                    } else {
+                        ctx.save();
+                        ctx.globalAlpha = p.life;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                        ctx.fillStyle = p.color;
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = p.color;
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                }
+            }
+            render();
+        }
+
+        if (trackId) prepareAudio();
+        else {
+            document.getElementById('visTitle').innerText = "No Track Selected";
+            statusText.innerText = "Please return to Hub and pick a track.";
+        }
+    </script>
+</body>
+</html>

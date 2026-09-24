@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZoneVaz Master Studio 👑 (Admin)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #0c0511; 
+            --card-bg: #130919; 
+            --border-soft: rgba(255, 255, 255, 0.08);
+            --text-white: #e9e3ee;
+            --text-gray: #776d82;
+            --cute-pink: #ff9ebd;
+            --cute-purple: #c49fff;
+            --gradient-main: linear-gradient(90deg, #d38dff, #ffacc0);
+            --accent-green: #1DB954;
+            --accent-red: #ff4757;
+            --accent-blue: #00A8E1;
+        }
+        body.theme-cyber { --bg-dark: #050a14; --card-bg: #091024; --border-soft: rgba(0, 255, 255, 0.15); --text-white: #e0fbfc; --text-gray: #6b8a9c; --cute-pink: #00ffff; --cute-purple: #ff00ff; --gradient-main: linear-gradient(90deg, #00ffff, #ff00ff); }
+        body.theme-sakura { --bg-dark: #1a0e13; --card-bg: #26141c; --border-soft: rgba(255, 183, 197, 0.15); --text-white: #fff0f5; --text-gray: #b595a2; --cute-pink: #ffb7c5; --cute-purple: #ff9ebd; --gradient-main: linear-gradient(90deg, #ff9ebd, #ffb7c5); }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: var(--bg-dark); color: var(--text-white); font-family: 'Nunito', sans-serif; display: flex; height: 100vh; height: 100dvh; overflow: hidden; }
+
+        /* Security Gate Overlay */
+        #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0c0511; z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .auth-card { width: 360px; padding: 36px 30px; background: var(--card-bg); border: 1px solid var(--cute-pink); border-radius: 20px; text-align: center; box-shadow: 0 0 35px rgba(255, 158, 189, 0.2); }
+        .auth-card h2 { font-family: 'Quicksand', sans-serif; color: var(--cute-pink); margin-bottom: 8px; }
+        .auth-mode { display: flex; gap: 6px; margin-bottom: 18px; background: rgba(255,255,255,0.04); padding: 5px; border-radius: 12px; }
+        .auth-mode button { flex: 1; background: transparent; border: 1px solid transparent; color: var(--text-gray); padding: 8px 4px; border-radius: 9px; font-family: 'Nunito', sans-serif; font-size: 0.72rem; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        .auth-mode button.active { background: var(--gradient-main); color: var(--bg-dark); }
+        .auth-input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border-soft); background: rgba(0,0,0,0.5); color: #fff; text-align: center; margin-bottom: 12px; font-family: 'Nunito', sans-serif; outline: none; }
+        .auth-input:focus { border-color: var(--cute-pink); }
+        .btn-main { width: 100%; background: var(--gradient-main); color: var(--bg-dark); border: none; padding: 12px; border-radius: 30px; font-weight: 700; cursor: pointer; transition: 0.3s; font-family: 'Nunito', sans-serif; }
+        .btn-main:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(255, 158, 189, 0.3); }
+        .error-msg { color: #ff4757; font-size: 0.75rem; font-weight: 700; display: none; margin-bottom: 10px; }
+        .back-site { display: inline-block; margin-top: 18px; color: var(--text-gray); font-size: 0.75rem; text-decoration: none; font-weight: 700; transition: 0.2s; }
+
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--card-bg); border-right: 1px solid var(--border-soft); padding: 25px 15px; display: flex; flex-direction: column; flex-shrink: 0; }
+        .logo { font-family: 'Quicksand', sans-serif; font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 6px; padding-left: 10px; }
+        .logo span { color: var(--cute-pink); }
+        .admin-chip { padding: 6px 12px; margin: 0 10px 18px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-soft); border-radius: 12px; font-size: 0.7rem; color: var(--text-gray); font-weight: 700; }
+        .admin-chip b { color: var(--cute-pink); }
+        .menu-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
+        .menu-item { padding: 10px 14px; border-radius: 12px; color: var(--text-gray); font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.85rem; display: flex; align-items: center; gap: 10px; }
+        .menu-item:hover, .menu-item.active { background: rgba(255,255,255,0.05); color: var(--cute-pink); }
+        .back-link { margin-top: auto; padding: 12px; border: 1px solid var(--border-soft); border-radius: 12px; text-align: center; color: var(--text-gray); text-decoration: none; font-size: 0.8rem; font-weight: 700; transition: 0.2s; }
+        .back-link:hover { border-color: var(--cute-pink); color: #fff; }
+
+        /* Main Workspace */
+        .workspace { flex-grow: 1; padding: 35px 40px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
+        .workspace::-webkit-scrollbar { width: 5px; }
+        .workspace::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 10px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-family: 'Quicksand', sans-serif; font-size: 1.8rem; }
+        .header .btn-main { width: auto; padding: 8px 18px; font-size: 0.85rem; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 35px; }
+        .stat-card { background: var(--card-bg); border: 1px solid var(--border-soft); padding: 20px; border-radius: 16px; }
+        .stat-card h3 { color: var(--text-gray); font-size: 0.75rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 700; }
+        .stat-card p { font-size: 1.8rem; font-family: 'Quicksand', sans-serif; color: var(--cute-pink); font-weight: 700; }
+
+        .section { display: none; background: var(--card-bg); border: 1px solid var(--border-soft); border-radius: 20px; padding: 30px; animation: fadeIn 0.3s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border-soft); padding-bottom: 12px; }
+        .section-header h2 { font-family: 'Quicksand', sans-serif; color: var(--cute-pink); font-size: 1.25rem; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group.full { grid-column: span 2; }
+        .input-group label { display: block; font-size: 0.75rem; color: var(--text-gray); margin-bottom: 6px; font-weight: 700; }
+        .form-input { width: 100%; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--border-soft); background: rgba(0,0,0,0.3); color: #fff; font-family: 'Nunito', sans-serif; font-size: 0.85rem; outline: none; transition: 0.2s;}
+        .form-input:focus { border-color: var(--cute-pink); }
+        textarea.form-input { min-height: 80px; resize: vertical; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 14px 15px; text-align: left; border-bottom: 1px solid var(--border-soft); font-size: 0.85rem; }
+        th { color: var(--text-gray); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+        
+        .action-btns { display: flex; gap: 8px; }
+        .btn-action { background: transparent; border: 1px solid var(--border-soft); padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 0.75rem; font-weight: 700; transition: 0.2s;}
+        .btn-edit { color: var(--cute-pink); border-color: var(--cute-pink); }
+        .btn-edit:hover { background: var(--cute-pink); color: #000; }
+        .btn-del { color: var(--accent-red); border-color: var(--accent-red); }
+        .btn-del:hover { background: var(--accent-red); color: #fff; }
+        
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.65rem; font-weight: 700; }
+        .badge-pin { background: rgba(255, 158, 189, 0.15); color: var(--cute-pink); border: 1px solid var(--cute-pink); }
+        .badge-log { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; }
+        .badge-auth { background: rgba(255, 158, 189, 0.15); color: var(--cute-pink); }
+        .badge-track { background: rgba(0, 168, 225, 0.15); color: var(--accent-blue); }
+        .badge-danger { background: rgba(255, 71, 87, 0.15); color: var(--accent-red); }
+        .badge-super { background: linear-gradient(90deg, rgba(255,215,0,0.2), rgba(255,158,189,0.2)); color: #ffd700; border: 1px solid rgba(255,215,0,0.4); }
+        .badge-zone { background: rgba(196, 159, 255, 0.15); color: var(--cute-purple); border: 1px solid var(--cute-purple); }
+        .perm-chip { display: inline-block; background: rgba(255,255,255,0.05); color: var(--text-gray); padding: 2px 8px; border-radius: 10px; font-size: 0.6rem; font-weight: 700; margin: 2px; border: 1px solid var(--border-soft); }
+        .perm-chip.on { color: var(--cute-pink); border-color: var(--cute-pink); background: rgba(255,158,189,0.08); }
+
+        .pw-mask { font-family: monospace; letter-spacing: 2px; }
+        .backup-card { border: 1px dashed var(--border-soft); padding: 25px; border-radius: 15px; text-align: center; margin-bottom: 20px;}
+        
+        .studio-player { margin-top: 15px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-soft); padding: 15px; border-radius: 15px; display: flex; align-items: center; justify-content: space-between; }
+        audio { height: 35px; width: 60%; accent-color: var(--cute-pink); outline: none;}
+
+        /* Permission checkboxes for team form */
+        .perm-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .perm-opt { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-soft); padding: 9px 12px; border-radius: 10px; cursor: pointer; font-size: 0.72rem; font-weight: 700; color: var(--text-gray); transition: 0.2s; }
+        .perm-opt input { accent-color: var(--cute-pink); }
+        .perm-opt.checked { border-color: var(--cute-pink); color: var(--text-white); background: rgba(255,158,189,0.06); }
+        .zone-preview { font-size: 0.7rem; color: var(--cute-purple); font-weight: 700; margin-top: 6px; }
+    </style>
+</head>
+<body>
+
+    <!-- Security Gate Overlay (Master Passcode OR Admin Email) -->
+    <div id="authOverlay">
+        <div class="auth-card">
+            <h2>Studio Gate 🗝️</h2>
+            <p style="color: var(--text-gray); font-size: 0.8rem; margin-bottom: 16px;">Welcome back. Sign in to continue.</p>
+
+            <div class="auth-mode">
+                <button id="modePassBtn" class="active" onclick="setLoginMode('passcode')">🔑 Master Passcode</button>
+                <button id="modeEmailBtn" onclick="setLoginMode('email')">👤 Admin Email</button>
+            </div>
+
+            <div id="authPasscodeBox">
+                <input type="password" id="passcode" class="auth-input" placeholder="Enter Master Passcode..." onkeypress="handleAuth(event)">
+            </div>
+            <div id="authEmailBox" style="display:none;">
+                <input type="email" id="adminEmail" class="auth-input" placeholder="Admin Email (e.g. dj@zonevaz.me)" onkeypress="handleAuth(event)">
+                <input type="password" id="adminPass" class="auth-input" placeholder="Password" onkeypress="handleAuth(event)">
+            </div>
+
+            <div id="authError" class="error-msg">Access Denied!</div>
+            <button class="btn-main" onclick="verifyAuth()">Unlock Command Center</button>
+            <div><a href="index.html" class="back-site">← Back to Website</a></div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">ZoneVaz <span>Studio</span></div>
+        <div class="admin-chip" id="adminChip">Loading...</div>
+        <div class="menu-list" id="menuList"></div>
+        <a href="index.html" class="back-link">← Return to Website</a>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="workspace">
+        <div class="header">
+            <h1 id="pageTitle">Dashboard</h1>
+            <button class="btn-main" onclick="logout()">🔒 Lock Studio</button>
+        </div>
+
+        <!-- 1. DASHBOARD -->
+        <div id="sec-dashboard" class="section active">
+            <div class="stats-grid">
+                <div class="stat-card"><h3>Total Originals</h3><p id="stat-tracks">0</p></div>
+                <div class="stat-card"><h3>Registered Users</h3><p id="stat-users">0</p></div>
+                <div class="stat-card"><h3>Fan Requests</h3><p id="stat-inbox">0</p></div>
+                <div class="stat-card"><h3>Search Queries</h3><p id="stat-searches">0</p></div>
+            </div>
+            <div class="section-header"><h2>Quick Live Audio Tester 🎧</h2></div>
+            <div class="studio-player">
+                <div>
+                    <h4 id="previewTitle" style="color: #fff; font-size: 0.9rem;">No Track Selected</h4>
+                    <p id="previewArtist" style="color: var(--text-gray); font-size: 0.75rem;">Select track from database to preview</p>
+                </div>
+                <audio id="audioTester" controls style="display: none;"></audio>
+                <div id="spotifyPreviewContainer"></div>
+            </div>
+            <div class="section-header" style="margin-top: 30px;"><h2>Latest System Activity</h2></div>
+            <div id="quickLogsBox" style="color: var(--text-gray); font-size: 0.85rem; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px; line-height: 1.8;"><p>Loading activity stream...</p></div>
+        </div>
+
+        <!-- 2. UPLOAD & EDIT TRACK -->
+        <div id="sec-upload" class="section">
+            <div class="section-header"><h2 id="formTitle">Upload New Original Track 🌸</h2></div>
+            <input type="hidden" id="trackId"><input type="hidden" id="encodedCover"><input type="hidden" id="encodedAudio">
+            <div class="form-grid">
+                <div class="input-group"><label>Track Title *</label><input type="text" id="tTitle" class="form-input" placeholder="e.g. Midnight Reverie"></div>
+                <div class="input-group"><label>Track Badge / Tag</label><input type="text" id="tTag" class="form-input" placeholder="e.g. Lofi, Unreleased, Single"></div>
+                <div class="input-group full"><label>Lyrics / Production Notes</label><textarea id="tDesc" class="form-input" placeholder="Behind the track notes or lyrics..."></textarea></div>
+                <div class="input-group">
+                    <label>Custom Cover Artwork (Max 2.5MB)</label>
+                    <input type="file" id="coverFile" accept="image/*" class="form-input" onchange="processFile(this, 'cover')">
+                    <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+                        <img id="coverPreview" style="width:40px; height:40px; border-radius:6px; object-fit:cover; display:none;">
+                        <span id="coverName" style="font-size: 0.75rem; color: var(--text-gray);">No image selected</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Direct Local Audio File (.mp3/.wav)</label>
+                    <input type="file" id="audioFile" accept="audio/*" class="form-input" onchange="processFile(this, 'audio')">
+                    <div style="margin-top:8px;"><span id="audioName" style="font-size: 0.75rem; color: var(--text-gray);">No audio file selected</span></div>
+                </div>
+                <div class="input-group"><label>Spotify Track URL</label><input type="url" id="lSpotify" class="form-input" placeholder="https://open.spotify.com/track/..."></div>
+                <div class="input-group"><label>YouTube Link</label><input type="url" id="lYoutube" class="form-input" placeholder="https://youtube.com/..."></div>
+                <div class="input-group"><label>Apple Music Link</label><input type="url" id="lApple" class="form-input" placeholder="https://music.apple.com/..."></div>
+                <div class="input-group"><label>SoundCloud Link</label><input type="url" id="lSoundcloud" class="form-input" placeholder="https://soundcloud.com/..."></div>
+                <div class="input-group full" style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                    <input type="checkbox" id="tPinned" style="accent-color: var(--cute-pink); cursor: pointer; width: 16px; height: 16px;">
+                    <label for="tPinned" style="margin-bottom: 0; cursor: pointer; color: #fff;">Pin this release to top of website (Featured Track) ⭐</label>
+                </div>
+            </div>
+            <div style="display: flex; gap: 15px; margin-top: 25px;">
+                <button class="btn-main" id="saveBtn" onclick="saveTrack()">Publish Track</button>
+                <button class="btn-main" id="cancelEditBtn" style="background: transparent; border: 1px solid var(--text-gray); color: var(--text-gray); display: none;" onclick="cancelEdit()">Cancel</button>
+            </div>
+        </div>
+
+        <!-- 3. MANAGE TRACKS -->
+        <div id="sec-manage" class="section">
+            <div class="section-header"><h2>All Tracks in Database</h2></div>
+            <table><thead><tr><th>Cover</th><th>Track Info</th><th>Badge</th><th>Preview</th><th>Actions</th></tr></thead><tbody id="trackTableBody"></tbody></table>
+        </div>
+
+        <!-- 4. REGISTERED USERS -->
+        <div id="sec-users" class="section">
+            <div class="section-header">
+                <h2>Registered Audiophiles</h2>
+                <span style="font-size: 0.75rem; color: var(--text-gray); font-weight: 700;">🔒 Passwords are securely hashed and can never be viewed.</span>
+            </div>
+            <table><thead><tr><th>Avatar</th><th>Display Name</th><th>Email Address</th><th>Password</th><th>Registered Date</th><th>Actions</th></tr></thead><tbody id="usersTableBody"></tbody></table>
+        </div>
+
+        <!-- 5. FAN REQUESTS & INBOX -->
+        <div id="sec-inbox" class="section">
+            <div class="section-header"><h2>Fan Song Requests & Messages</h2><button class="btn-action btn-del" onclick="clearInbox()">🗑️ Clear Inbox</button></div>
+            <table><thead><tr><th>Date</th><th>Fan Name</th><th>Request / Song Title</th><th>Note / Mood</th><th>Action</th></tr></thead><tbody id="inboxTableBody"></tbody></table>
+        </div>
+
+        <!-- 6. VISITOR SEARCH QUERIES ANALYTICS -->
+        <div id="sec-searches" class="section">
+            <div class="section-header"><h2>Visitor Search Analytics</h2><button class="btn-action btn-del" onclick="clearSearchHistory()">🗑️ Wipe Search Queries</button></div>
+            <p style="font-size: 0.8rem; color: var(--text-gray); margin-bottom: 15px;">Shows terms visitors entered into the Spotify search engine on ZoneVaz.</p>
+            <table><thead><tr><th>Timestamp</th><th>Search Query</th><th>Visitor Origin</th></tr></thead><tbody id="searchTableBody"></tbody></table>
+        </div>
+
+        <!-- 7. VIBE & COLOR STUDIO -->
+        <div id="sec-theme" class="section">
+            <div class="section-header"><h2>Custom Vibe & Accent Studio</h2></div>
+            <p style="font-size: 0.8rem; color: var(--text-gray); margin-bottom: 20px;">Dynamically configure website accent colors and glows without editing CSS files.</p>
+            <div class="form-grid">
+                <div class="input-group"><label>Main Accent (Cute Pink)</label><input type="color" id="thmPink" class="form-input" style="height:45px; padding:2px; cursor:pointer;" value="#ff9ebd"></div>
+                <div class="input-group"><label>Secondary Accent (Cute Purple)</label><input type="color" id="thmPurple" class="form-input" style="height:45px; padding:2px; cursor:pointer;" value="#c49fff"></div>
+                <div class="input-group"><label>Dark Workspace Background</label><input type="color" id="thmBg" class="form-input" style="height:45px; padding:2px; cursor:pointer;" value="#0c0511"></div>
+                <div class="input-group"><label>Card Surface Background</label><input type="color" id="thmCard" class="form-input" style="height:45px; padding:2px; cursor:pointer;" value="#130919"></div>
+            </div>
+            <div style="display: flex; gap: 15px; margin-top: 15px;">
+                <button class="btn-main" style="width: 200px;" onclick="applyCustomColors()">Apply Color Palette</button>
+                <button class="btn-main" style="width: 150px; background: transparent; border: 1px solid var(--text-gray); color: var(--text-gray);" onclick="resetColors()">Reset Default</button>
+            </div>
+        </div>
+
+        <!-- 8. LIVE ACTIVITY LOGS -->
+        <div id="sec-logs" class="section">
+            <div class="section-header"><h2>Audit & Activity Trail</h2><button class="btn-action btn-del" onclick="clearLogs()">🗑️ Wipe All Logs</button></div>
+            <table><thead><tr><th>Timestamp</th><th>Category</th><th>Activity Details</th><th>Status</th></tr></thead><tbody id="logsTableBody"></tbody></table>
+        </div>
+
+        <!-- 9. SITE & PASSCODE SETTINGS -->
+        <div id="sec-settings" class="section">
+            <div class="section-header"><h2>Security & Site Configurations</h2></div>
+            <div class="form-grid">
+                <div class="input-group"><label>Change Studio Master Passcode</label><input type="password" id="setPasscode" class="form-input" placeholder="Enter a NEW passcode (min 4 chars)"></div>
+                <div class="input-group"><label>RapidAPI Keys (Spotify Downloader 9) — one per line</label><textarea id="setApiKeys" class="form-input" placeholder="Paste RapidAPI keys, one per line..." style="min-height: 100px;"></textarea></div>
+                <div class="input-group full"><label>Top Announcement Banner Message (Leave blank to hide)</label><input type="text" id="setBannerText" class="form-input" placeholder="🌸 New Single dropping this Friday!"></div>
+            </div>
+            <button class="btn-main" style="width: 220px; margin-top: 15px;" onclick="saveSettings()">Save Configurations</button>
+        </div>
+
+        <!-- 10. BACKUP & RESTORE -->
+        <div id="sec-backup" class="section">
+            <div class="section-header"><h2>Database Safety & Migration</h2></div>
+            <div class="backup-card">
+                <h3 style="font-size: 1.1rem; margin-bottom: 8px;">Export Full Backup (JSON)</h3>
+                <p style="font-size: 0.8rem; color: var(--text-gray); margin-bottom: 15px;">Downloads tracks, user accounts, requests, logs, and color palettes into a single backup file. (Passwords are never exported — hashes only.)</p>
+                <button class="btn-main" style="width: auto; padding: 10px 25px;" onclick="exportDatabase()">📥 Download Full Master Backup</button>
+            </div>
+            <div class="backup-card">
+                <h3 style="font-size: 1.1rem; margin-bottom: 8px;">Restore from Backup</h3>
+                <p style="font-size: 0.8rem; color: var(--text-gray); margin-bottom: 15px;">Select a previously downloaded `.json` file to restore all website data.</p>
+                <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="importDatabase(event)">
+                <button class="btn-main" style="width: auto; padding: 10px 25px; background: transparent; border: 1px solid var(--cute-pink); color: var(--cute-pink);" onclick="document.getElementById('importFileInput').click()">📤 Upload & Restore Backup</button>
+            </div>
+        </div>
+
+        <!-- 11. ADMIN TEAM (Super Admin only) -->
+        <div id="sec-team" class="section">
+            <div class="section-header"><h2 id="teamFormTitle">Create New Admin 👑</h2><button class="btn-action btn-edit" style="display:none;" id="teamCancelEdit" onclick="cancelAdminEdit()">← Cancel Edit</button></div>
+
+            <div class="form-grid">
+                <div class="input-group"><label>Admin Name *</label><input type="text" id="aName" class="form-input" placeholder="e.g. DJ Aarav"></div>
+                <div class="input-group"><label>Email Address</label><input type="email" id="aEmail" class="form-input" placeholder="their@email.com"></div>
+                <div class="input-group full" style="display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="aZone" style="accent-color: var(--cute-purple); cursor: pointer; width: 16px; height: 16px;" onchange="zonePreview()">
+                    <label for="aZone" style="margin-bottom: 0; cursor: pointer; color: var(--cute-purple); font-weight: 700;">Generate a custom ZoneEmail (name@zonevaz.me)</label>
+                </div>
+                <div class="input-group full"><div class="zone-preview" id="zonePreview"></div></div>
+                <div class="input-group"><label>Password *</label><input type="password" id="aPass" class="form-input" placeholder="Min 6 characters" autocomplete="new-password"></div>
+                <div class="input-group full"><label>Permissions</label><div class="perm-picker" id="permPicker"></div></div>
+            </div>
+
+            <input type="hidden" id="editAdminId">
+            <button class="btn-main" style="width: 220px; margin-top: 15px;" onclick="saveAdmin()">Create Admin</button>
+
+            <div class="section-header" style="margin-top: 35px;"><h2>Current Admin Team</h2></div>
+            <table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Permissions</th><th>Created</th><th>Actions</th></tr></thead><tbody id="teamTableBody"></tbody></table>
+        </div>
+
+        <!-- 12. MY ACCOUNT -->
+        <div id="sec-account" class="section">
+            <div class="section-header"><h2>My Account 👤</h2></div>
+            <div class="studio-player" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <span style="font-size: 2rem;">👑</span>
+                    <div>
+                        <h4 id="accName" style="color: #fff; font-size: 1.1rem;">—</h4>
+                        <p id="accEmail" style="color: var(--text-gray); font-size: 0.8rem;">—</p>
+                    </div>
+                </div>
+                <div id="accRole" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+            </div>
+
+            <div class="section-header" style="margin-top: 25px;"><h2>Change Password 🔑</h2></div>
+            <div class="form-grid" style="max-width: 520px;">
+                <div class="input-group"><label>Current Password / Passcode</label><input type="password" id="accOldPass" class="form-input" placeholder="Your current password"></div>
+                <div class="input-group"><label>New Password</label><input type="password" id="accNewPass" class="form-input" placeholder="Min 6 characters"></div>
+            </div>
+            <button class="btn-main" style="width: 220px; margin-top: 10px;" onclick="changeMyPassword()">Update Password</button>
+        </div>
+
+    </div>
+
+    <script src="common.js?v=4"></script>
+    <script>
+        // --- STATE ---
+        let isAdmin = false;
+        let isSuper = false;
+        let adminPerms = [];
+        let adminName = '';
+        let adminEmail = '';
+        let tracksCache = [];
+        let usersCache = [];
+        let inboxCache = [];
+        let searchesCache = [];
+        let logsCache = [];
+        let loginMode = 'passcode';
+        let permOptions = {};
+
+        const pageTitles = {
+            dashboard: 'Dashboard', upload: 'Upload Track', manage: 'Manage Tracks', users: 'Audiophiles & Accounts',
+            inbox: 'Fan Requests / Inbox', searches: 'Search Analytics', theme: 'Vibe & Color Studio', logs: 'Live Activity Logs',
+            settings: 'Site & Passcode Settings', backup: 'Data & Backup', team: 'Admin Team', account: 'My Account'
+        };
+
+        function hasPerm(p) {
+            return isSuper || adminPerms.includes('*') || adminPerms.includes(p);
+        }
+
+        // --- LOGIN ---
+        async function init() {
+            const boot = await ZV.bootstrap();
+            if (boot && boot.isAdmin && boot.admin) {
+                isAdmin = true;
+                isSuper = !!boot.admin.isSuper;
+                adminPerms = boot.admin.permissions || [];
+                adminName = boot.admin.name || '';
+                adminEmail = boot.admin.email || '';
+                document.getElementById('authOverlay').style.display = 'none';
+                document.getElementById('adminChip').innerHTML = 'Signed in as <b>' + ZV.esc(adminName) + '</b>' + (isSuper ? ' ⭐' : '');
+                buildMenu();
+                await initAllData();
+            } else {
+                document.getElementById('authOverlay').style.display = 'flex';
+            }
+        }
+
+        function setLoginMode(mode) {
+            loginMode = mode;
+            document.getElementById('modePassBtn').className = mode === 'passcode' ? 'active' : '';
+            document.getElementById('modeEmailBtn').className = mode === 'email' ? 'active' : '';
+            document.getElementById('authPasscodeBox').style.display = mode === 'passcode' ? 'block' : 'none';
+            document.getElementById('authEmailBox').style.display = mode === 'email' ? 'block' : 'none';
+            document.getElementById('authError').style.display = 'none';
+        }
+
+        async function verifyAuth() {
+            const errBox = document.getElementById('authError');
+            errBox.style.display = 'none';
+            let body;
+            if (loginMode === 'passcode') {
+                body = { passcode: document.getElementById('passcode').value };
+            } else {
+                body = { email: document.getElementById('adminEmail').value.trim(), pass: document.getElementById('adminPass').value };
+            }
+            try {
+                await ZV.api('/api/admin/login', { method: 'POST', body });
+                location.reload(); // re-bootstrap picks up the admin role
+            } catch (e) {
+                errBox.innerText = e.message || 'Access Denied!';
+                errBox.style.display = 'block';
+            }
+        }
+
+        function handleAuth(e) { if (e.key === 'Enter') verifyAuth(); }
+
+        async function logout() { await ZV.logout(); }
+
+        // --- NAVIGATION ---
+        function buildMenu() {
+            const items = [
+                { key: 'dashboard', label: '📊 Dashboard', show: true },
+                { key: 'upload', label: '📤 Upload Track', show: hasPerm('tracks') },
+                { key: 'manage', label: '📂 Manage Tracks', show: hasPerm('tracks') },
+                { key: 'users', label: '👥 Audiophiles & Accounts', show: hasPerm('users') },
+                { key: 'inbox', label: '📬 Fan Requests / Inbox', show: hasPerm('inbox') },
+                { key: 'searches', label: '🔍 Search Query Analytics', show: hasPerm('searches') },
+                { key: 'theme', label: '🎨 Vibe & Color Studio', show: hasPerm('theme') },
+                { key: 'logs', label: '📜 Live Activity Logs', show: hasPerm('logs') },
+                { key: 'settings', label: '⚙️ Site & Passcode Settings', show: hasPerm('settings') },
+                { key: 'backup', label: '💾 Data & Backup', show: hasPerm('backup') },
+                { key: 'team', label: '👑 Admin Team', show: isSuper },
+                { key: 'account', label: '👤 My Account', show: true }
+            ];
+            const menu = document.getElementById('menuList');
+            menu.innerHTML = '';
+            items.filter(i => i.show).forEach(i => {
+                const el = document.createElement('div');
+                el.className = 'menu-item' + (i.key === 'dashboard' ? ' active' : '');
+                el.textContent = i.label;
+                el.setAttribute('data-menu', i.key);
+                el.onclick = function () { switchMenu(i.key, el); };
+                menu.appendChild(el);
+            });
+        }
+
+        function switchMenu(menu, el) {
+            document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+            if (el) el.classList.add('active');
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            const sec = document.getElementById('sec-' + menu);
+            if (sec) sec.classList.add('active');
+            document.getElementById('pageTitle').innerText = pageTitles[menu] || menu;
+            if (menu === 'team') loadTeam();
+            if (menu === 'account') loadAccount();
+        }
+
+        // --- DATA LOADERS ---
+        async function loadTracks() {
+            try { const d = await ZV.api('/api/tracks'); tracksCache = (d && d.tracks) || []; }
+            catch (e) { tracksCache = []; }
+        }
+        async function loadUsers() {
+            try { const d = await ZV.api('/api/admin/users'); usersCache = (d && d.users) || []; }
+            catch (e) { usersCache = []; }
+        }
+        async function loadInbox() {
+            try { const d = await ZV.api('/api/requests'); inboxCache = (d && d.inbox) || []; }
+            catch (e) { inboxCache = []; }
+        }
+        async function loadSearches() {
+            try { const d = await ZV.api('/api/searches'); searchesCache = (d && d.searches) || []; }
+            catch (e) { searchesCache = []; }
+        }
+        async function loadLogs() {
+            try { const d = await ZV.api('/api/logs'); logsCache = (d && d.logs) || []; }
+            catch (e) { logsCache = []; }
+        }
+
+        async function initAllData() {
+            await Promise.all([loadTracks(), loadUsers(), loadInbox(), loadSearches(), loadLogs(), loadSettings(), loadPalette()]);
+            initDashboard();
+            renderTracksTable();
+            renderUsersTable();
+            renderInboxTable();
+            renderSearchTable();
+            renderLogsTable();
+            loadTeamOptions();
+        }
+
+        function initDashboard() {
+            document.getElementById('stat-tracks').innerText = tracksCache.length;
+            document.getElementById('stat-users').innerText = usersCache.length;
+            document.getElementById('stat-inbox').innerText = inboxCache.length;
+            document.getElementById('stat-searches').innerText = searchesCache.length;
+            const qBox = document.getElementById('quickLogsBox');
+            if (!logsCache || logsCache.length === 0) {
+                qBox.innerHTML = '<p>No recent activity detected.</p>';
+            } else {
+                qBox.innerHTML = logsCache.slice(0, 5).map(l =>
+                    `<p style="margin-bottom: 5px;"><strong>[${ZV.esc(l.timestamp)}]</strong> <span style="color:var(--cute-pink);">${ZV.esc(l.category)}:</span> ${ZV.esc(l.details)}</p>`
+                ).join('');
+            }
+        }
+
+        // --- MEDIA FILE PROCESSOR ---
+        function processFile(input, type) {
+            const file = input.files[0];
+            if (!file) return;
+            if (type === 'audio' && file.size > 8 * 1024 * 1024) { alert("Audio file exceeds 8MB!"); input.value = ""; return; }
+            if (type === 'cover' && file.size > 2.5 * 1024 * 1024) { alert("Cover file exceeds 2.5MB!"); input.value = ""; return; }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result;
+                if (type === 'cover') {
+                    document.getElementById('encodedCover').value = base64Data;
+                    const preview = document.getElementById('coverPreview');
+                    preview.src = base64Data; preview.style.display = 'block';
+                    document.getElementById('coverName').innerText = file.name;
+                } else if (type === 'audio') {
+                    document.getElementById('encodedAudio').value = base64Data;
+                    document.getElementById('audioName').innerText = "✓ Loaded: " + file.name;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- TRACK CRUD ---
+        function playTrackPreview(id) {
+            const t = tracksCache.find(x => x.id === id);
+            if (!t) return;
+            document.getElementById('previewTitle').innerText = t.title;
+            document.getElementById('previewArtist').innerText = t.artist + (t.tag ? ` • [${t.tag}]` : '');
+            const audioEl = document.getElementById('audioTester');
+            const spBox = document.getElementById('spotifyPreviewContainer');
+            if (t.audioUrl) {
+                spBox.innerHTML = '';
+                audioEl.style.display = 'inline-block'; audioEl.src = t.audioUrl; audioEl.play();
+            } else if (t.links && t.links.spotify) {
+                audioEl.pause(); audioEl.style.display = 'none';
+                const match = t.links.spotify.match(/track\/([a-zA-Z0-9]+)/);
+                const trackId = match ? match[1] : null;
+                spBox.innerHTML = trackId
+                    ? `<iframe src="https://open.spotify.com/embed/track/${ZV.esc(trackId)}?utm_source=generator&theme=0" width="300" height="80" frameBorder="0" allowfullscreen="" style="border-radius:10px;" title="Spotify player"></iframe>`
+                    : '<span style="font-size:0.75rem; color:var(--text-gray);">(Invalid Spotify Link)</span>';
+            } else {
+                audioEl.style.display = 'none';
+                spBox.innerHTML = '<span style="font-size:0.75rem; color:var(--text-gray);">(No Audio File or Spotify Link)</span>';
+            }
+        }
+
+        async function saveTrack() {
+            const id = document.getElementById('trackId').value;
+            const title = document.getElementById('tTitle').value.trim();
+            if (!title) { alert("Title is mandatory!"); return; }
+            const trackData = {
+                title, artist: "Zynu", tag: document.getElementById('tTag').value.trim() || 'Original',
+                details: document.getElementById('tDesc').value.trim(),
+                cover: document.getElementById('encodedCover').value || '',
+                audioUrl: document.getElementById('encodedAudio').value || '',
+                pinned: document.getElementById('tPinned').checked,
+                links: {
+                    spotify: document.getElementById('lSpotify').value.trim(),
+                    youtube: document.getElementById('lYoutube').value.trim(),
+                    apple: document.getElementById('lApple').value.trim(),
+                    soundcloud: document.getElementById('lSoundcloud').value.trim()
+                }
+            };
+            try {
+                if (id) {
+                    await ZV.api('/api/tracks/' + encodeURIComponent(id), { method: 'PUT', body: { track: trackData } });
+                    alert("Track Updated Successfully! 🌸");
+                } else {
+                    await ZV.api('/api/tracks', { method: 'POST', body: { track: trackData } });
+                    alert("New Track Published to ZoneVaz! 🚀");
+                }
+                await loadTracks(); cancelEdit(); await initAllData();
+                switchMenu('manage', document.querySelectorAll('.menu-item[data-menu="manage"]')[0]);
+            } catch (e) { alert(e.message || 'Could not save track.'); }
+        }
+
+        function renderTracksTable() {
+            const tbody = document.getElementById('trackTableBody');
+            tbody.innerHTML = '';
+            if (tracksCache.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-gray);">No tracks found. Upload your first release!</td></tr>';
+                return;
+            }
+            tracksCache.forEach(t => {
+                const coverHTML = t.cover
+                    ? `<img src="${ZV.esc(t.cover)}" style="width:40px; height:40px; border-radius:6px; object-fit:cover;" alt="">`
+                    : `<div style="width:40px; height:40px; border-radius:6px; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; font-size:1.2rem;">🎵</div>`;
+                const pinBadge = t.pinned ? `<span class="badge badge-pin">⭐ PINNED</span>` : '';
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${coverHTML}</td>
+                        <td><strong style="color: #fff;">${ZV.esc(t.title)}</strong> ${pinBadge}<p style="font-size: 0.75rem; color: var(--text-gray);">${ZV.esc(t.artist)}</p></td>
+                        <td><span class="badge" style="background: rgba(255,255,255,0.05); color: #fff;">${ZV.esc(t.tag || 'Track')}</span></td>
+                        <td><button class="btn-action" style="color: var(--accent-green); border-color: var(--accent-green);" data-action="preview" data-id="${ZV.esc(t.id)}">▶️ Play Test</button></td>
+                        <td><div class="action-btns">
+                            <button class="btn-action btn-edit" data-action="edit" data-id="${ZV.esc(t.id)}">Edit</button>
+                            <button class="btn-action btn-del" data-action="del-track" data-id="${ZV.esc(t.id)}" data-title="${ZV.esc(t.title)}">Delete</button>
+                        </div></td>
+                    </tr>`;
+            });
+        }
+
+        function editTrack(id) {
+            const t = tracksCache.find(x => x.id === id);
+            if (!t) return;
+            switchMenu('upload', document.querySelectorAll('.menu-item[data-menu="upload"]')[0]);
+            document.getElementById('formTitle').innerText = "✏️ Edit Track: " + t.title;
+            document.getElementById('saveBtn').innerText = "Update Track";
+            document.getElementById('cancelEditBtn').style.display = 'inline-block';
+            document.getElementById('trackId').value = t.id;
+            document.getElementById('tTitle').value = t.title || '';
+            document.getElementById('tTag').value = t.tag || '';
+            document.getElementById('tDesc').value = t.details || '';
+            document.getElementById('tPinned').checked = !!t.pinned;
+            document.getElementById('lSpotify').value = (t.links && t.links.spotify) || '';
+            document.getElementById('lYoutube').value = (t.links && t.links.youtube) || '';
+            document.getElementById('lApple').value = (t.links && t.links.apple) || '';
+            document.getElementById('lSoundcloud').value = (t.links && t.links.soundcloud) || '';
+            document.getElementById('encodedCover').value = t.cover || '';
+            if (t.cover) { const preview = document.getElementById('coverPreview'); preview.src = t.cover; preview.style.display = 'block'; document.getElementById('coverName').innerText = "Existing cover loaded"; }
+            document.getElementById('encodedAudio').value = t.audioUrl || '';
+            if (t.audioUrl) document.getElementById('audioName').innerText = "Existing local audio loaded";
+        }
+
+        function cancelEdit() {
+            document.getElementById('formTitle').innerText = "Upload New Original Track 🌸";
+            document.getElementById('saveBtn').innerText = "Publish Track";
+            document.getElementById('cancelEditBtn').style.display = 'none';
+            ['trackId','tTitle','tTag','tDesc','encodedCover','encodedAudio','lSpotify','lYoutube','lApple','lSoundcloud'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('tPinned').checked = false;
+            document.getElementById('coverFile').value = '';
+            document.getElementById('audioFile').value = '';
+            document.getElementById('coverPreview').style.display = 'none';
+            document.getElementById('coverName').innerText = 'No image selected';
+            document.getElementById('audioName').innerText = 'No audio file selected';
+        }
+
+        async function deleteTrack(id, title) {
+            if (confirm(`Are you sure you want to delete "${title}"?`)) {
+                try { await ZV.api('/api/tracks/' + encodeURIComponent(id), { method: 'DELETE' }); await loadTracks(); await initAllData(); }
+                catch (e) { alert(e.message || 'Could not delete track.'); }
+            }
+        }
+
+        // --- USERS ---
+        function renderUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+            if (usersCache.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-gray);">No registered users yet.</td></tr>'; return; }
+            usersCache.forEach(u => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-size: 1.4rem;">${ZV.esc(u.avatar || '🎧')}</td>
+                        <td style="font-weight: 700; color: #fff;">${ZV.esc(u.name)}</td>
+                        <td style="color: var(--text-gray);">${ZV.esc(u.email)}</td>
+                        <td><span class="pw-mask" title="Securely hashed — cannot be viewed">••••••••</span></td>
+                        <td style="color: var(--text-gray); font-size:0.75rem;">${ZV.esc(u.registeredAt || 'Prior Member')}</td>
+                        <td><button class="btn-action btn-del" data-action="del-user" data-id="${ZV.esc(u.id)}" data-name="${ZV.esc(u.name)}">Remove</button></td>
+                    </tr>`;
+            });
+        }
+
+        async function deleteUser(id, name) {
+            if (confirm(`Revoke access and purge user account: "${name}"?`)) {
+                try { await ZV.api('/api/admin/users/' + encodeURIComponent(id), { method: 'DELETE' }); await loadUsers(); await initAllData(); }
+                catch (e) { alert(e.message || 'Could not delete user.'); }
+            }
+        }
+
+        // --- INBOX ---
+        function renderInboxTable() {
+            const tbody = document.getElementById('inboxTableBody');
+            tbody.innerHTML = '';
+            if (inboxCache.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-gray);">No fan requests yet.</td></tr>'; return; }
+            inboxCache.forEach((req, idx) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-size: 0.75rem; color: var(--text-gray);">${ZV.esc(req.date || 'Recent')}</td>
+                        <td style="font-weight: 700; color: #fff;">${ZV.esc(req.sender || 'Anonymous')}</td>
+                        <td style="color: var(--cute-pink);">${ZV.esc(req.songTitle || 'Untitled')}</td>
+                        <td style="color: var(--text-gray); word-break: break-word;">${ZV.esc(req.note || 'No notes')}</td>
+                        <td><button class="btn-action btn-del" data-action="del-inbox" data-idx="${idx}">Dismiss</button></td>
+                    </tr>`;
+            });
+        }
+
+        async function deleteInboxItem(idx) {
+            try {
+                inboxCache.splice(idx, 1);
+                await ZV.api('/api/requests/replace', { method: 'POST', body: { inbox: inboxCache } });
+                await loadInbox(); renderInboxTable(); initDashboard();
+            } catch (e) { await loadInbox(); renderInboxTable(); }
+        }
+
+        async function clearInbox() {
+            if (confirm("Clear all fan song requests?")) {
+                try { await ZV.api('/api/requests/clear', { method: 'DELETE' }); await loadInbox(); renderInboxTable(); initDashboard(); }
+                catch (e) { alert(e.message); }
+            }
+        }
+
+        // --- SEARCHES ---
+        function renderSearchTable() {
+            const tbody = document.getElementById('searchTableBody');
+            tbody.innerHTML = '';
+            if (searchesCache.length === 0) { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-gray);">No global search terms recorded.</td></tr>'; return; }
+            searchesCache.slice(0, 50).forEach(s => {
+                tbody.innerHTML += `<tr><td style="font-size: 0.75rem; color: var(--text-gray);">${ZV.esc(s.time)}</td><td style="font-weight: 700; color: var(--cute-pink);">🎵 ${ZV.esc(s.query)}</td><td style="color: var(--text-gray); font-size: 0.8rem;">Global Spotify Downloader</td></tr>`;
+            });
+        }
+
+        async function clearSearchHistory() {
+            if (confirm("Wipe all recorded visitor search terms?")) {
+                try { await ZV.api('/api/searches/clear', { method: 'DELETE' }); await loadSearches(); renderSearchTable(); initDashboard(); }
+                catch (e) { alert(e.message); }
+            }
+        }
+
+        // --- THEME ---
+        async function loadPalette() {
+            try {
+                const d = await ZV.api('/api/settings');
+                const p = d.settings.palette || { pink: '#ff9ebd', purple: '#c49fff', bg: '#0c0511', card: '#130919' };
+                document.getElementById('thmPink').value = p.pink || '#ff9ebd';
+                document.getElementById('thmPurple').value = p.purple || '#c49fff';
+                document.getElementById('thmBg').value = p.bg || '#0c0511';
+                document.getElementById('thmCard').value = p.card || '#130919';
+            } catch (e) {}
+        }
+
+        async function applyCustomColors() {
+            const palette = {
+                pink: document.getElementById('thmPink').value,
+                purple: document.getElementById('thmPurple').value,
+                bg: document.getElementById('thmBg').value,
+                card: document.getElementById('thmCard').value
+            };
+            try { await ZV.api('/api/palette', { method: 'POST', body: { palette } }); ZV.applyPalette(palette); alert("Custom Vibe Applied! ✨"); }
+            catch (e) { alert(e.message || 'Could not save palette.'); }
+        }
+
+        async function resetColors() {
+            const palette = { pink: '#ff9ebd', purple: '#c49fff', bg: '#0c0511', card: '#130919' };
+            try { await ZV.api('/api/palette', { method: 'POST', body: { palette } }); ZV.applyPalette(palette); await loadPalette(); alert("Reset to default aesthetic theme."); }
+            catch (e) { alert(e.message || 'Could not reset palette.'); }
+        }
+
+        // --- LOGS ---
+        function renderLogsTable() {
+            const tbody = document.getElementById('logsTableBody');
+            tbody.innerHTML = '';
+            if (logsCache.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-gray);">No activity logged yet.</td></tr>'; return; }
+            logsCache.forEach(l => {
+                let badgeClass = "badge-auth";
+                if (l.category === "Track") badgeClass = "badge-track";
+                if (l.status === "Blocked" || l.status === "Deleted" || l.status === "Warning") badgeClass = "badge-danger";
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="color: var(--text-gray); font-size: 0.75rem; white-space: nowrap;">${ZV.esc(l.timestamp)}</td>
+                        <td><span class="badge-log ${badgeClass}">${ZV.esc(l.category)}</span></td>
+                        <td style="color: #fff; word-break: break-word;">${ZV.esc(l.details)}</td>
+                        <td style="color: var(--cute-pink); font-size: 0.8rem; font-weight:700;">${ZV.esc(l.status)}</td>
+                    </tr>`;
+            });
+        }
+
+        async function clearLogs() {
+            if (confirm("Are you sure you want to erase all activity records?")) {
+                try { await ZV.api('/api/logs/clear', { method: 'DELETE' }); await loadLogs(); renderLogsTable(); initDashboard(); }
+                catch (e) { alert(e.message); }
+            }
+        }
+
+        // --- SETTINGS ---
+        async function loadSettings() {
+            try {
+                const d = await ZV.api('/api/settings');
+                const s = d.settings;
+                document.getElementById('setBannerText').value = s.banner || '';
+                document.getElementById('setApiKeys').value = Array.isArray(s.apiKeys) ? s.apiKeys.join('\n') : '';
+            } catch (e) {}
+        }
+
+        async function saveSettings() {
+            const banner = document.getElementById('setBannerText').value.trim();
+            const apiKeys = document.getElementById('setApiKeys').value.split('\n').map(k => k.trim()).filter(k => k.length > 8);
+            const newPasscode = document.getElementById('setPasscode').value;
+            try {
+                const body = { banner, apiKeys };
+                if (newPasscode) body.newPasscode = newPasscode;
+                await ZV.api('/api/settings', { method: 'POST', body });
+                document.getElementById('setPasscode').value = '';
+                alert("Settings Synchronized with Website! ⚙️");
+            } catch (e) { alert(e.message || 'Could not save settings.'); }
+        }
+
+        // --- BACKUP ---
+        async function exportDatabase() {
+            try {
+                const data = await ZV.api('/api/backup');
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `ZoneVaz_Master_Backup_${Date.now()}.json`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                alert("Backup downloaded! 💾");
+            } catch (e) { alert(e.message || 'Could not export backup.'); }
+        }
+
+        async function importDatabase(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            event.target.value = '';
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    await ZV.api('/api/restore', { method: 'POST', body: { data: parsed } });
+                    alert("Master Database Restored Successfully! 💾");
+                    await initAllData();
+                } catch (err) { alert("Invalid JSON Backup File! ❌"); }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- ADMIN TEAM ---
+        async function loadTeamOptions() {
+            try {
+                const d = await ZV.api('/api/admin/team');
+                permOptions = d.permOptions || {};
+                renderPermPicker();
+            } catch (e) { permOptions = {}; }
+        }
+
+        function renderPermPicker(selected) {
+            selected = selected || {};
+            const box = document.getElementById('permPicker');
+            box.innerHTML = '';
+            Object.keys(permOptions).forEach(key => {
+                const label = permOptions[key];
+                const el = document.createElement('label');
+                el.className = 'perm-opt' + (selected[key] ? ' checked' : '');
+                el.innerHTML = `<input type="checkbox" data-perm="${key}" ${selected[key] ? 'checked' : ''}> <span>${ZV.esc(label)}</span>`;
+                el.querySelector('input').addEventListener('change', function () {
+                    el.classList.toggle('checked', this.checked);
+                });
+                box.appendChild(el);
+            });
+        }
+
+        function getCheckedPerms() {
+            const perms = [];
+            document.querySelectorAll('#permPicker input[type="checkbox"]').forEach(c => { if (c.checked) perms.push(c.getAttribute('data-perm')); });
+            return perms;
+        }
+
+        function zonePreview() {
+            const name = document.getElementById('aName').value.trim();
+            const el = document.getElementById('zonePreview');
+            if (document.getElementById('aZone').checked) {
+                const zone = name.toLowerCase().replace(/[^a-z0-9._-]/gi, '').replace(/\s+/g, '.') || 'member';
+                el.innerText = 'ZoneEmail will be: ' + zone + '@zonevaz.me';
+            } else {
+                el.innerText = '';
+            }
+        }
+
+        async function loadTeam() {
+            try {
+                const d = await ZV.api('/api/admin/team');
+                const list = d.admins || [];
+                const tbody = document.getElementById('teamTableBody');
+                tbody.innerHTML = '';
+                if (list.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-gray);">No sub-admins yet. Create your first one above!</td></tr>';
+                    return;
+                }
+                list.forEach(a => {
+                    const perms = (a.permissions || []).map(p => `<span class="perm-chip on">${p}</span>`).join('') || '<span class="perm-chip">none</span>';
+                    const roleBadge = a.isZoneEmail
+                        ? '<span class="badge badge-zone">📧 ZoneEmail</span>'
+                        : '<span class="badge badge-auth">Admin</span>';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-weight: 700; color: #fff;">${ZV.esc(a.name)}</td>
+                            <td style="color: var(--text-gray);">${ZV.esc(a.email)}</td>
+                            <td>${roleBadge}</td>
+                            <td>${perms}</td>
+                            <td style="color: var(--text-gray); font-size:0.75rem;">${ZV.esc(a.createdAt || 'Recent')}</td>
+                            <td><div class="action-btns">
+                                <button class="btn-action btn-edit" data-action="edit-admin" data-id="${ZV.esc(a.id)}" data-name="${ZV.esc(a.name)}" data-email="${ZV.esc(a.email)}" data-perms="${ZV.esc((a.permissions||[]).join(','))}">Edit</button>
+                                <button class="btn-action btn-del" data-action="del-admin" data-id="${ZV.esc(a.id)}" data-name="${ZV.esc(a.name)}">Delete</button>
+                            </div></td>
+                        </tr>`;
+                });
+            } catch (e) {}
+        }
+
+        function saveAdmin() {
+            const editId = document.getElementById('editAdminId').value;
+            const name = document.getElementById('aName').value.trim();
+            const email = document.getElementById('aEmail').value.trim();
+            const makeZoneEmail = document.getElementById('aZone').checked;
+            const pass = document.getElementById('aPass').value;
+            const perms = getCheckedPerms();
+
+            if (!name) { alert("Please enter the admin's name!"); return; }
+            if (!makeZoneEmail && !email) { alert("Please enter an email OR tick Generate ZoneEmail!"); return; }
+            if (!pass && !editId) { alert("Please set a password!"); return; }
+            if (pass && pass.length < 6) { alert("Password must be at least 6 characters!"); return; }
+
+            const body = { name, permissions: perms };
+            if (email) body.email = email;
+            if (makeZoneEmail) body.makeZoneEmail = true;
+            if (pass) body.pass = pass;
+
+            const req = editId
+                ? ZV.api('/api/admin/team/' + encodeURIComponent(editId), { method: 'PUT', body })
+                : ZV.api('/api/admin/team', { method: 'POST', body });
+
+            req.then(async function () {
+                alert(editId ? "Admin updated! ✨" : "Admin created! 🎉");
+                cancelAdminEdit();
+                await loadTeam();
+            }).catch(function (e) {
+                alert(e.message || 'Could not save admin.');
+            });
+        }
+
+        function editAdmin(id, name, email, permsCsv) {
+            document.getElementById('editAdminId').value = id;
+            document.getElementById('teamFormTitle').innerText = 'Edit Admin ✏️';
+            document.getElementById('teamCancelEdit').style.display = 'inline-block';
+            document.getElementById('aName').value = name;
+            document.getElementById('aEmail').value = email || '';
+            document.getElementById('aZone').checked = false;
+            document.getElementById('aPass').value = '';
+            document.getElementById('zonePreview').innerText = '';
+            const sel = {};
+            (permsCsv || '').split(',').filter(Boolean).forEach(p => { sel[p] = true; });
+            renderPermPicker(sel);
+            document.querySelector('.section.active') && switchMenu('team', document.querySelectorAll('.menu-item[data-menu="team"]')[0]);
+            document.getElementById('teamFormTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function cancelAdminEdit() {
+            document.getElementById('editAdminId').value = '';
+            document.getElementById('teamFormTitle').innerText = 'Create New Admin 👑';
+            document.getElementById('teamCancelEdit').style.display = 'none';
+            document.getElementById('aName').value = '';
+            document.getElementById('aEmail').value = '';
+            document.getElementById('aZone').checked = false;
+            document.getElementById('aPass').value = '';
+            document.getElementById('zonePreview').innerText = '';
+            renderPermPicker({});
+        }
+
+        async function deleteAdmin(id, name) {
+            if (confirm(`Delete admin "${name}"? They will lose access immediately.`)) {
+                try { await ZV.api('/api/admin/team/' + encodeURIComponent(id), { method: 'DELETE' }); await loadTeam(); }
+                catch (e) { alert(e.message || 'Could not delete admin.'); }
+            }
+        }
+
+        // --- MY ACCOUNT ---
+        function loadAccount() {
+            document.getElementById('accName').innerText = adminName;
+            document.getElementById('accEmail').innerText = adminEmail;
+            const roleBox = document.getElementById('accRole');
+            roleBox.innerHTML = '';
+            const superBadge = document.createElement('span');
+            superBadge.className = 'badge badge-super';
+            superBadge.textContent = '⭐ Super Admin';
+            roleBox.appendChild(superBadge);
+            if (!isSuper) {
+                (adminPerms || []).forEach(p => {
+                    const chip = document.createElement('span');
+                    chip.className = 'badge badge-track';
+                    chip.textContent = p;
+                    roleBox.appendChild(chip);
+                });
+            }
+        }
+
+        async function changeMyPassword() {
+            const oldPass = document.getElementById('accOldPass').value;
+            const newPass = document.getElementById('accNewPass').value;
+            if (!oldPass || !newPass) { alert("Please fill both fields!"); return; }
+            try {
+                await ZV.api('/api/admin/password', { method: 'POST', body: { oldPass, newPass } });
+                document.getElementById('accOldPass').value = '';
+                document.getElementById('accNewPass').value = '';
+                alert("Password updated! 🔑");
+            } catch (e) { alert(e.message || 'Could not update password.'); }
+        }
+
+        // --- EVENT DELEGATION (XSS-safe) ---
+        document.addEventListener('click', function(e) {
+            const el = e.target.closest('[data-action]');
+            if (!el) return;
+            const action = el.getAttribute('data-action');
+            const id = el.getAttribute('data-id');
+
+            if (action === 'preview') playTrackPreview(id);
+            else if (action === 'edit') editTrack(id);
+            else if (action === 'del-track') deleteTrack(id, el.getAttribute('data-title') || '');
+            else if (action === 'del-user') deleteUser(id, el.getAttribute('data-name') || '');
+            else if (action === 'del-inbox' && el.getAttribute('data-idx') !== null) deleteInboxItem(parseInt(el.getAttribute('data-idx'), 10));
+            else if (action === 'edit-admin') editAdmin(id, el.getAttribute('data-name') || '', el.getAttribute('data-email') || '', el.getAttribute('data-perms') || '');
+            else if (action === 'del-admin') deleteAdmin(id, el.getAttribute('data-name') || '');
+        });
+
+        init();
+    </script>
+</body>
+</html>

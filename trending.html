@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZoneVaz 🔥 - Trending Charts</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+
+    <script>
+        // Apply cached palette instantly (server-synced)
+        try {
+            const cached = JSON.parse(localStorage.getItem('zonevaz_palette_cache'));
+            if (cached) {
+                document.documentElement.style.setProperty('--cute-pink', cached.pink || '#ff9ebd');
+                document.documentElement.style.setProperty('--cute-purple', cached.purple || '#c49fff');
+                document.documentElement.style.setProperty('--bg-dark', cached.bg || '#0c0511');
+                document.documentElement.style.setProperty('--card-bg', cached.card || '#130919');
+            }
+        } catch (e) {}
+    </script>
+
+    <style>
+        :root { --bg-dark: #0c0511; --card-bg: #130919; --border-soft: rgba(255, 255, 255, 0.08); --text-white: #e9e3ee; --text-gray: #776d82; --cute-pink: #ff9ebd; --cute-purple: #c49fff; --gradient-main: linear-gradient(90deg, #ff758c, #ff7eb3); }
+        body.theme-cyber { --bg-dark: #050a14; --card-bg: #091024; --border-soft: rgba(0, 255, 255, 0.15); --text-white: #e0fbfc; --text-gray: #6b8a9c; --cute-pink: #00ffff; --cute-purple: #ff00ff; --gradient-main: linear-gradient(90deg, #00ffff, #ff00ff); }
+        body.theme-sakura { --bg-dark: #1a0e13; --card-bg: #26141c; --border-soft: rgba(255, 183, 197, 0.15); --text-white: #fff0f5; --text-gray: #b595a2; --cute-pink: #ffb7c5; --cute-purple: #ff9ebd; --gradient-main: linear-gradient(90deg, #ff9ebd, #ffb7c5); }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: var(--bg-dark); color: var(--text-white); font-family: 'Nunito', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; height: 100dvh; overflow: hidden; }
+
+        .ambient-glow { position: fixed; filter: blur(140px); opacity: 0.12; z-index: -1; border-radius: 50%; pointer-events: none; animation: pulse 6s infinite alternate;}
+        .glow-1 { top: -10%; left: -10%; width: 45vw; height: 45vw; background: #ff4757; }
+        .glow-2 { bottom: -10%; right: -10%; width: 50vw; height: 50vw; background: #ffa502; animation-delay: -3s;}
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.1; } 100% { transform: scale(1.1); opacity: 0.18; } }
+
+        .navbar { width: 95%; max-width: 950px; margin-top: 15px; padding: 12px 20px; border: 1px solid var(--border-soft); border-radius: 40px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); backdrop-filter: blur(15px); z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.3);}
+        .logo { font-family: 'Quicksand', sans-serif; font-size: 1.1rem; font-weight: 700; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 5px; }
+        .logo span { color: #ff758c; font-size: 1.2rem; }
+        .back-btn { background: rgba(255,255,255,0.05); color: var(--text-white); border: 1px solid var(--border-soft); padding: 6px 16px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; text-decoration: none; transition: 0.3s; }
+        .back-btn:hover { border-color: #ff758c; color: #ff758c; background: rgba(255, 117, 140, 0.1); }
+
+        .main-content { width: 100%; flex-grow: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; display: flex; flex-direction: column; align-items: center; padding-bottom: 100px; z-index: 10;}
+        .main-content::-webkit-scrollbar { width: 4px; }
+        .main-content::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 10px; }
+
+        .hero { text-align: center; margin-top: 50px; margin-bottom: 40px; animation: popDown 0.5s ease;}
+        @keyframes popDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .hero h1 { font-family: 'Quicksand', sans-serif; font-size: 2.2rem; margin-bottom: 8px; font-weight: 800; background: var(--gradient-main); -webkit-background-clip: text; color: transparent; text-transform: uppercase; letter-spacing: 1px;}
+        .hero p { color: var(--text-gray); font-size: 0.85rem; font-weight: 600;}
+
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; width: 90%; max-width: 800px; margin: 0 auto; }
+        @media(max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+        
+        .card { border: 1px solid var(--border-soft); border-radius: 20px; padding: 22px; background: rgba(19, 9, 25, 0.6); backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: 15px; transition: 0.3s; position: relative; overflow: hidden; opacity: 0; animation: fadeInCard 0.6s ease forwards;}
+        .card:hover { border-color: #ff758c; transform: translateY(-4px); box-shadow: 0 10px 25px rgba(255, 117, 140, 0.15);}
+        .card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--gradient-main); border-radius: 20px 0 0 20px; }
+        
+        @keyframes fadeInCard {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; padding-left: 10px;}
+        .card h3 { font-size: 1.1rem; margin-bottom: 4px; font-family: 'Quicksand', sans-serif; font-weight: 800; color: #fff;}
+        .card p { font-size: 0.75rem; color: var(--text-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;}
+        
+        .rank-badge { position: absolute; top: 0; right: 20px; background: var(--gradient-main); color: #fff; font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 0 0 8px 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 2;}
+
+        .heart-icon { color: #fff; font-size: 1.2rem; cursor: pointer; opacity: 0.6; transition: 0.3s; user-select: none;}
+        .heart-icon:hover { opacity: 1; transform: scale(1.2);}
+        .heart-icon.saved { color: #ff758c; text-shadow: 0 0 12px #ff758c; transform: scale(1.1); opacity: 1;}
+
+        .actions-tray { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding-left: 10px;}
+        .action-btn { background: rgba(255,255,255,0.03); border: 1px solid var(--border-soft); color: var(--text-white); border-radius: 20px; padding: 6px 14px; font-size: 0.7rem; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 6px; text-decoration: none;}
+        .action-btn:hover { background: rgba(255, 117, 140, 0.1); border-color: #ff758c; color: #ff758c;}
+        
+        .player-box { background: rgba(0,0,0,0.4); border-radius: 12px; width: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 12px; min-height: 85px;}
+        
+        .loading-state { text-align: center; color: #ff758c; font-size: 1rem; font-weight: 800; padding: 40px; grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 15px;}
+        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255, 117, 140, 0.2); border-top-color: #ff758c; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <nav class="navbar">
+        <a href="index.html" class="logo">ZoneVaz <span>🔥</span></a>
+        <a href="index.html" class="back-btn">← Back to Hub</a>
+    </nav>
+
+    <div class="main-content">
+        <div class="hero">
+            <h1>Global Top 10</h1>
+            <p>Real-time aesthetic hits trending worldwide right now.</p>
+        </div>
+
+        <div class="grid" id="trendingGrid">
+            <!-- Cards will load here instantly -->
+        </div>
+    </div>
+
+    <script src="common.js?v=4"></script>
+    <script>
+        const trendingTracks = [
+            { id: "0VjIjW4GlUZAMYd2vXMi3b", title: "Blinding Lights", artist: "The Weeknd" },
+            { id: "7qiZfU4dY1lWllzX7mPBI3", title: "Shape of You", artist: "Ed Sheeran" },
+            { id: "1zi7xx7UVEF1a8cwGs2VbH", title: "Starboy", artist: "The Weeknd, Daft Punk" },
+            { id: "4LRPiXqCikLlN15c3yImP7", title: "As It Was", artist: "Harry Styles" },
+            { id: "3KkXRkHbMCARz0aVfEt68P", title: "Sunflower", artist: "Post Malone, Swae Lee" },
+            { id: "4uUG5RXrOk84mYEfFvj3cK", title: "I Wanna Be Yours", artist: "Arctic Monkeys" },
+            { id: "2QjOHCTQ1Jl3zawyYOpxh6", title: "Sweater Weather", artist: "The Neighbourhood" },
+            { id: "0tgVpDi06FyKpA1z0VMD4v", title: "Perfect", artist: "Ed Sheeran" },
+            { id: "5QO79kh1waicV47BqGRL3g", title: "Save Your Tears", artist: "The Weeknd" },
+            { id: "1qEmFfgcLObUfQm0j1W2VD", title: "Havana", artist: "Camila Cabello" }
+        ];
+
+        let currentUser = null;
+        let libraryCache = [];
+
+        async function toggleFavorite(trackId, title, artist, btnElement) {
+            if (!currentUser) {
+                alert("Please login to save tracks to your library! 💖");
+                window.location.href = 'login.html';
+                return;
+            }
+            try {
+                const data = await ZV.api('/api/library', { method: 'POST', body: { trackId, title, artist } });
+                libraryCache = (data && data.library) || [];
+                const added = !!(data && data.added);
+                btnElement.classList.toggle('saved', added);
+                btnElement.innerText = added ? '💖' : '🤍';
+            } catch (e) {
+                alert(e.message || 'Could not update your library.');
+            }
+        }
+
+        function renderInstantTrending() {
+            const grid = document.getElementById('trendingGrid');
+            grid.innerHTML = '';
+
+            trendingTracks.forEach((track, index) => {
+                let isSaved = libraryCache.some(t => t.trackId === track.id);
+                let heartClass = isSaved ? "heart-icon saved" : "heart-icon";
+                let heartIcon = isSaved ? "💖" : "🤍";
+
+                let delay = index * 0.1;
+
+                // Build safely with DOM APIs (XSS-safe).
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.animationDelay = delay + 's';
+
+                const badge = document.createElement('div');
+                badge.className = 'rank-badge';
+                badge.textContent = '#' + (index + 1);
+
+                const header = document.createElement('div');
+                header.className = 'card-header';
+                const titleWrap = document.createElement('div');
+                const h3 = document.createElement('h3');
+                h3.textContent = track.title;
+                const p = document.createElement('p');
+                p.textContent = track.artist;
+                titleWrap.appendChild(h3); titleWrap.appendChild(p);
+
+                const heart = document.createElement('div');
+                heart.className = heartClass;
+                heart.textContent = heartIcon;
+                heart.setAttribute('role', 'button');
+                heart.addEventListener('click', () => toggleFavorite(track.id, track.title, track.artist, heart));
+
+                header.appendChild(titleWrap); header.appendChild(heart);
+
+                const actions = document.createElement('div');
+                actions.className = 'actions-tray';
+                const dl = document.createElement('button');
+                dl.className = 'action-btn';
+                dl.textContent = '📥 Download MP3';
+                dl.addEventListener('click', () => downloadSong(track.id, track.title, track.artist));
+                actions.appendChild(dl);
+
+                const playerBox = document.createElement('div');
+                playerBox.className = 'player-box';
+                const iframe = document.createElement('iframe');
+                iframe.src = `https://open.spotify.com/embed/track/${encodeURIComponent(track.id)}?utm_source=generator&theme=0`;
+                iframe.width = '100%'; iframe.height = '80';
+                iframe.frameBorder = '0'; iframe.allowFullscreen = true;
+                iframe.style.cssText = 'border-radius: 10px;';
+                iframe.title = 'Spotify player';
+                playerBox.appendChild(iframe);
+
+                card.appendChild(badge); card.appendChild(header); card.appendChild(actions); card.appendChild(playerBox);
+                grid.appendChild(card);
+            });
+        }
+
+        function downloadSong(trackId, title, artist = "Unknown") {
+            const dlUrl = `download.html?id=${encodeURIComponent(trackId)}&title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`;
+            window.open(dlUrl, '_blank');
+        }
+
+        async function init() {
+            const boot = await ZV.bootstrap();
+            currentUser = boot.user || null;
+            if (currentUser) {
+                try { const d = await ZV.api('/api/library'); libraryCache = (d && d.library) || []; }
+                catch (e) { libraryCache = []; }
+            }
+            renderInstantTrending();
+        }
+        init();
+    </script>
+</body>
+</html>

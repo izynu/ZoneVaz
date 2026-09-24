@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZoneVaz ✨</title>
+    
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed:', err));
+            });
+        }
+
+        // Apply cached palette instantly (server-synced), before first paint
+        try {
+            const cached = JSON.parse(localStorage.getItem('zonevaz_palette_cache'));
+            if (cached) {
+                document.documentElement.style.setProperty('--cute-pink', cached.pink || '#ff9ebd');
+                document.documentElement.style.setProperty('--cute-purple', cached.purple || '#c49fff');
+                document.documentElement.style.setProperty('--bg-dark', cached.bg || '#0c0511');
+                document.documentElement.style.setProperty('--card-bg', cached.card || '#130919');
+            }
+        } catch (e) {}
+    </script>
+
+    <style>
+        /* --- THEMES --- */
+        :root { --bg-dark: #0c0511; --card-bg: #130919; --border-soft: rgba(255, 255, 255, 0.06); --text-white: #e9e3ee; --text-gray: #776d82; --cute-pink: #ff9ebd; --cute-purple: #c49fff; --gradient-main: linear-gradient(90deg, var(--cute-purple), var(--cute-pink)); }
+        body.theme-cyber { --bg-dark: #050a14; --card-bg: #091024; --border-soft: rgba(0, 255, 255, 0.15); --text-white: #e0fbfc; --text-gray: #6b8a9c; --cute-pink: #00ffff; --cute-purple: #ff00ff; --gradient-main: linear-gradient(90deg, #00ffff, #ff00ff); }
+        body.theme-sakura { --bg-dark: #1a0e13; --card-bg: #26141c; --border-soft: rgba(255, 183, 197, 0.15); --text-white: #fff0f5; --text-gray: #b595a2; --cute-pink: #ffb7c5; --cute-purple: #ff9ebd; --gradient-main: linear-gradient(90deg, #ff9ebd, #ffb7c5); }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: var(--bg-dark); color: var(--text-white); font-family: 'Nunito', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; height: 100dvh; overflow: hidden; transition: background-color 0.5s ease; }
+
+        .announcement-banner { width: 100%; background: var(--cute-pink); color: #000; text-align: center; padding: 8px 20px; font-size: 0.8rem; font-weight: 700; font-family: 'Quicksand', sans-serif; display: none; z-index: 1000; transition: background 0.5s ease;}
+
+        .ambient-glow { position: fixed; filter: blur(120px); opacity: 0.08; z-index: -1; border-radius: 50%; pointer-events: none; transition: background 0.8s ease;}
+        .glow-1 { top: -15%; left: -10%; width: 40vw; height: 40vw; background: var(--cute-pink); }
+        .glow-2 { bottom: -10%; right: -10%; width: 45vw; height: 45vw; background: var(--cute-purple); }
+
+        #visualizer { position: fixed; bottom: 0; left: 0; width: 100%; height: 150px; z-index: 0; pointer-events: none; opacity: 0.4; transition: opacity 0.5s; }
+
+        /* --- NAVBAR & NEW PROFILE PILL --- */
+        .navbar { width: 95%; max-width: 950px; margin-top: 15px; padding: 8px 20px; border: 1px solid var(--border-soft); border-radius: 40px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); z-index: 100; transition: border-color 0.5s ease;}
+        .logo { font-family: 'Quicksand', sans-serif; font-size: 1.1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none;}
+        .logo span { color: var(--cute-pink); font-size: 1.1rem; padding: 2px; transition: 0.3s; }
+        .logo span:hover { transform: scale(1.3); filter: drop-shadow(0 0 8px var(--cute-pink));}
+        
+        .nav-links { display: flex; gap: 12px; align-items: center; font-size: 0.8rem; font-weight: 600; color: var(--text-gray); }
+        .nav-pill { border: 1px solid rgba(255,255,255,0.1); background: transparent; color: var(--text-white); padding: 6px 14px; border-radius: 30px; font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.3s; text-decoration: none;}
+        .nav-pill:hover { border-color: var(--cute-pink); color: var(--cute-pink); }
+        
+        .user-greeting { display: none; align-items: center; gap: 8px; }
+        
+        .profile-link { background: rgba(255, 158, 189, 0.05); border: 1px solid transparent; color: var(--cute-pink); text-decoration: none; display: flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; transition: 0.3s; font-family: 'Quicksand', sans-serif; font-weight: 700; font-size: 0.85rem;}
+        .profile-link:hover { background: rgba(255, 158, 189, 0.15); border-color: var(--cute-pink); transform: translateY(-1px);}
+        .profile-link .edit-icon { font-size: 0.85rem; opacity: 0.7; transition: transform 0.4s ease; }
+        .profile-link:hover .edit-icon { opacity: 1; transform: rotate(90deg); }
+        .user-avatar-img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; border: 1px solid var(--cute-pink); }
+
+        /* --- MOBILE TWEAKS --- */
+        @media (max-width: 750px) {
+            .navbar { padding: 8px 12px; gap: 5px; flex-wrap: wrap; justify-content: center;}
+            .logo { font-size: 0.95rem; margin-bottom: 5px;}
+            .nav-links { gap: 6px; flex-wrap: wrap; justify-content: center;}
+            .nav-pill { padding: 4px 10px; font-size: 0.7rem; }
+            .profile-link { padding: 4px 8px; font-size: 0.75rem; gap: 4px; }
+            .profile-link .profile-name { max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .user-avatar-img { width: 16px; height: 16px; }
+        }
+
+        .main-content { width: 100%; flex-grow: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; display: flex; flex-direction: column; align-items: center; padding-bottom: 120px; z-index: 10;}
+        .main-content::-webkit-scrollbar { width: 4px; }
+        .main-content::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 10px; }
+
+        .hero { text-align: center; margin-top: 40px; margin-bottom: 25px;}
+        .hero h1 { font-family: 'Quicksand', sans-serif; font-size: 1.9rem; margin-bottom: 6px; font-weight: 700; background: var(--gradient-main); -webkit-background-clip: text; color: transparent;}
+        .hero p { color: var(--text-gray); font-size: 0.75rem; font-weight: 600;}
+
+        .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap;}
+        .tab-btn { border: 1px solid var(--border-soft); padding: 6px 16px; border-radius: 30px; background: transparent; color: var(--text-gray); font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: 0.3s; font-family: 'Nunito', sans-serif; }
+        .tab-btn.active { background: var(--gradient-main); color: var(--bg-dark); border: none; box-shadow: 0 0 10px rgba(255, 255, 255, 0.1); }
+
+        .tab-section { display: none; width: 100%; flex-direction: column; align-items: center; animation: fadeIn 0.3s ease;}
+        .tab-section.active-section { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .search-container { width: 90%; max-width: 550px; margin: 0 auto 30px; }
+        .search-bar { width: 100%; padding: 12px 20px; border-radius: 50px; border: 1px solid var(--border-soft); background: rgba(0,0,0,0.3); color: var(--text-white); font-size: 0.8rem; font-family: 'Nunito', sans-serif; outline: none; transition: 0.3s;}
+        .search-bar:focus { border-color: var(--cute-pink); box-shadow: 0 0 10px rgba(255,255,255,0.05);}
+        
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 90%; max-width: 700px; margin: 0 auto; }
+        @media(max-width: 650px) { .grid { grid-template-columns: 1fr; } }
+        
+        .card { border: 1px solid var(--border-soft); border-radius: 16px; padding: 20px; background: var(--card-bg); display: flex; flex-direction: column; gap: 12px; transition: 0.3s; }
+        .card:hover { border-color: var(--cute-pink); transform: translateY(-2px);}
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .card h3 { font-size: 1.05rem; margin-bottom: 2px; font-family: 'Quicksand', sans-serif; font-weight: 700; color: #fff;}
+        .card p { font-size: 0.7rem; color: var(--text-gray); font-weight: 600;}
+        .card-desc { font-size: 0.75rem; color: #bfaecf; font-style: italic; margin-bottom: 5px; line-height: 1.4; word-wrap: break-word;}
+        
+        .heart-icon { color: #fff; font-size: 1.1rem; cursor: pointer; opacity: 0.8; transition: 0.3s; user-select: none;}
+        .heart-icon:hover { opacity: 1; transform: scale(1.2);}
+        .heart-icon.saved { color: var(--cute-pink); text-shadow: 0 0 10px var(--cute-pink); transform: scale(1.1);}
+
+        .actions-tray { display: flex; gap: 8px; align-items: center; flex-wrap: wrap;}
+        .action-btn { border: 1px solid var(--border-soft); background: transparent; color: var(--text-white); border-radius: 20px; padding: 5px 12px; font-size: 0.65rem; font-weight: 700; width: fit-content; font-family: 'Nunito', sans-serif; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none;}
+        .action-btn:hover { background: rgba(255,255,255,0.05); border-color: var(--cute-pink); color: var(--cute-pink);}
+        
+        .btn-spotify:hover { color: #1DB954; border-color: #1DB954; }
+        .btn-youtube:hover { color: #FF0000; border-color: #FF0000; }
+        .btn-apple:hover { color: #FA243C; border-color: #FA243C; }
+        .btn-soundcloud:hover { color: #ff5500; border-color: #ff5500; }
+        
+        .player-box { background: rgba(0,0,0,0.3); border-radius: 10px; width: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 10px; min-height: 80px;}
+        audio { width: 100%; height: 35px; outline: none; accent-color: var(--cute-pink); }
+        
+        footer { padding: 40px 0 20px; font-size: 0.75rem; color: var(--text-gray); font-weight: 600; margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 10px;}
+        
+        /* --- MODALS --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 1000; align-items: center; justify-content: center; animation: fadeIn 0.3s ease; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; padding: 20px;}
+        .modal-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; margin: auto; width: 100%; max-width: 450px;}
+        .close-modal { position: absolute; top: -40px; right: 0; color: #fff; font-size: 2rem; cursor: pointer; background: transparent; border: none; transition: 0.2s; z-index: 10;}
+        .close-modal:hover { color: var(--cute-pink); transform: scale(1.1);}
+
+        .form-card { width: 100%; padding: 35px 25px; background: var(--card-bg); border: 1px solid var(--border-soft); border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.5);}
+        .form-card h2 { font-family: 'Quicksand', sans-serif; color: var(--cute-pink); margin-bottom: 8px; font-size: 1.6rem; text-align: center;}
+        .form-submit { width: 100%; background: var(--gradient-main); color: var(--bg-dark); border: none; padding: 14px; border-radius: 30px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: 0.3s; margin-top: 10px;}
+        .form-submit:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 158, 189, 0.3);}
+        
+        .req-input { width: 100%; padding: 12px 15px; border-radius: 12px; border: 1px solid var(--border-soft); background: rgba(0,0,0,0.3); color: #fff; margin-bottom: 15px; font-family: 'Nunito', sans-serif; outline: none; }
+        .req-input:focus { border-color: var(--cute-pink); }
+        
+        /* --- PREMIUM IG STORY CARD --- */
+        .ig-card { width: 320px; height: 568px; background: #0c0511; border-radius: 24px; position: relative; overflow: hidden; font-family: 'Nunito', sans-serif; }
+        .ig-bg-shape1 { position: absolute; top: -10%; left: -20%; width: 250px; height: 250px; background: var(--cute-purple); filter: blur(70px); opacity: 0.5; z-index: 0; }
+        .ig-bg-shape2 { position: absolute; bottom: 0; right: -20%; width: 250px; height: 250px; background: var(--cute-pink); filter: blur(70px); opacity: 0.4; z-index: 0; }
+        
+        .ig-content-wrap { position: absolute; inset: 0; padding: 40px 25px; display: flex; flex-direction: column; align-items: center; z-index: 1; background: rgba(255, 255, 255, 0.02); }
+        
+        .ig-artwork { width: 220px; height: 220px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); margin-top: 20px; margin-bottom: 35px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; background: var(--gradient-main); }
+        .ig-artwork img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        
+        /* Fallback Aesthetic Vinyl */
+        .ig-vinyl { width: 180px; height: 180px; border-radius: 50%; background: #111; border: 4px solid #222; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 15px rgba(0,0,0,0.8); }
+        .ig-vinyl-center { width: 50px; height: 50px; background: var(--gradient-main); border-radius: 50%; border: 3px solid #000; }
+
+        .ig-info { width: 100%; text-align: left; padding: 0 5px; margin-bottom: 25px; }
+        .ig-title { font-size: 1.6rem; font-weight: 800; color: #fff; margin-bottom: 5px; font-family: 'Quicksand', sans-serif; line-height: 1.2; word-wrap: break-word; text-shadow: 0 2px 10px rgba(0,0,0,0.5);}
+        .ig-artist { font-size: 1.05rem; color: var(--cute-pink); font-weight: 700; text-shadow: 0 2px 10px rgba(0,0,0,0.5);}
+
+        .ig-player { width: 100%; padding: 0 5px; margin-bottom: auto;}
+        .ig-prog-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; margin-bottom: 8px; overflow: hidden; }
+        .ig-prog-fill { width: 35%; height: 100%; background: var(--cute-pink); border-radius: 3px; box-shadow: 0 0 10px var(--cute-pink);}
+        .ig-time-row { display: flex; justify-content: space-between; font-size: 0.7rem; color: rgba(255,255,255,0.6); font-weight: 700; margin-bottom: 15px; }
+        .ig-controls { display: flex; justify-content: center; gap: 30px; color: #fff; font-size: 1.4rem; align-items: center; opacity: 0.9;}
+        .ig-controls .play-btn { font-size: 2.4rem; color: var(--cute-pink); text-shadow: 0 0 15px rgba(255,158,189,0.5);}
+
+        .ig-watermark { background: rgba(0,0,0,0.4); padding: 8px 18px; border-radius: 20px; font-size: 0.7rem; color: #fff; font-weight: 800; letter-spacing: 2px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px);}
+        
+        .share-ig-btn { margin-top: 25px; background: var(--gradient-main); color: var(--bg-dark); border: none; padding: 10px 25px; border-radius: 30px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: 0.3s; z-index: 10;}
+        .share-ig-btn:hover { transform: scale(1.05); }
+
+        /* --- ENHANCED IG STORY (MUSIC PLAYER ART) --- */
+        .ig-cover-bg { position: absolute; inset: -25%; background-size: cover; background-position: center; filter: blur(45px) brightness(0.55); opacity: 0; transition: opacity 0.5s ease; z-index: 0; }
+        .ig-cover-bg.show { opacity: 0.9; }
+        .ig-artwork { overflow: visible; }
+        .ig-artwork img { border-radius: 18px; box-shadow: 0 18px 45px rgba(0,0,0,0.7); }
+        .ig-vinyl { animation: igSpin 9s linear infinite; }
+        .ig-vinyl.paused { animation-play-state: paused; }
+        @keyframes igSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .ig-prog-fill { position: relative; transition: width 0.4s ease; }
+        .ig-prog-fill::after { content: ''; position: absolute; right: -2px; top: -3px; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: 0 0 10px var(--cute-pink); }
+        .ig-eq { display: flex; align-items: flex-end; gap: 3px; height: 14px; margin: 4px 0 10px; justify-content: center; }
+        .ig-eq span { width: 3px; background: var(--cute-pink); border-radius: 2px; animation: eqPulse 0.9s ease-in-out infinite; }
+        .ig-eq span:nth-child(1) { height: 8px; animation-delay: 0s; }
+        .ig-eq span:nth-child(2) { height: 14px; animation-delay: 0.15s; }
+        .ig-eq span:nth-child(3) { height: 6px; animation-delay: 0.3s; }
+        .ig-eq span:nth-child(4) { height: 11px; animation-delay: 0.45s; }
+        .ig-eq span:nth-child(5) { height: 5px; animation-delay: 0.6s; }
+        @keyframes eqPulse { 0%, 100% { transform: scaleY(0.5); } 50% { transform: scaleY(1.3); } }
+        .ig-controls .play-btn { animation: playPulse 2s ease-in-out infinite; }
+        @keyframes playPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+        .ig-time-row { transition: none; }
+    </style>
+</head>
+<body>
+
+    <!-- Dynamic Audio Visualizer Canvas -->
+    <canvas id="visualizer"></canvas>
+
+    <!-- ADMIN ANNOUNCEMENT BANNER -->
+    <div id="topBanner" class="announcement-banner"></div>
+    
+    <!-- Background Glows -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <!-- LOGIN PROMPT MODAL -->
+    <div class="modal-overlay" id="loginPromptModal">
+        <div class="modal-wrapper">
+            <button class="close-modal" onclick="closeModal('loginPromptModal')">&times;</button>
+            <div class="form-card" style="text-align: center;">
+                <h2>Hold up! 🛑</h2>
+                <p style="text-align: center; line-height: 1.6; margin-top: 15px; color: var(--text-gray); font-size: 0.85rem;">
+                    You need to be logged in to build your personal library and send song requests directly to the studio.
+                </p>
+                <button class="form-submit" onclick="window.location.href='login.html'">Login / Sign Up</button>
+                <button class="form-submit" style="background: transparent; border: 1px solid var(--text-gray); color: var(--text-gray); margin-top: 10px;" onclick="closeModal('loginPromptModal')">Maybe Later</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- IG MODAL POPUP (PREMIUM PLAYER VIBE) -->
+    <div class="modal-overlay" id="igModal">
+        <div class="modal-wrapper">
+            <button class="close-modal" onclick="closeIGModal()">&times;</button>
+            
+            <div class="ig-card" id="captureCard">
+                <div class="ig-cover-bg" id="igCoverBg"></div>
+                <div class="ig-bg-shape1"></div>
+                <div class="ig-bg-shape2"></div>
+                
+                <div class="ig-content-wrap">
+                    <div class="ig-artwork">
+                        <img id="igModalCover" src="" alt="Album cover">
+                        <div class="ig-vinyl" id="igModalVinyl"><div class="ig-vinyl-center"></div></div>
+                    </div>
+                    
+                    <div class="ig-info">
+                        <div class="ig-title" id="igModalTitle">Song Name</div>
+                        <div class="ig-artist" id="igModalArtist">Artist</div>
+                    </div>
+
+                    <div class="ig-player">
+                        <div class="ig-prog-bar"><div class="ig-prog-fill" id="igProgFill"></div></div>
+                        <div class="ig-eq"><span></span><span></span><span></span><span></span><span></span></div>
+                        <div class="ig-time-row"><span id="igTimeNow">0:00</span><span id="igTimeTotal">0:00</span></div>
+                        <div class="ig-controls">
+                            <span>⏮</span>
+                            <span class="play-btn">▶</span>
+                            <span>⏭</span>
+                        </div>
+                    </div>
+
+                    <div class="ig-watermark">🎧 ZONEVAZ STUDIO</div>
+                </div>
+            </div>
+
+            <button class="share-ig-btn" onclick="shareToIG(this)">📲 Save & Share to IG</button>
+        </div>
+    </div>
+
+    <!-- ABOUT PAGE MODAL -->
+    <div class="modal-overlay" id="aboutModal">
+        <div class="modal-wrapper">
+            <button class="close-modal" onclick="closeModal('aboutModal')">&times;</button>
+            <div class="form-card" style="text-align: center;">
+                <h2>About ZoneVaz ☁️</h2>
+                <p style="text-align: justify; line-height: 1.6; margin-top: 15px; color: var(--text-gray); font-size: 0.85rem;">
+                    ZoneVaz is a highly curated aesthetic music ecosystem built for true audiophiles. <br><br>
+                    Created by <strong>Zynu</strong>, this platform serves as a hub for original, heartfelt compositions and a gateway to exploring global hits without visual clutter. 
+                </p>
+                <button class="form-submit" style="background: transparent; border: 1px solid var(--cute-pink); color: var(--cute-pink);" onclick="closeModal('aboutModal')">Return to Hub</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SONG REQUEST MODAL -->
+    <div class="modal-overlay" id="requestModal">
+        <div class="modal-wrapper">
+            <button class="close-modal" onclick="closeModal('requestModal')">&times;</button>
+            <div class="form-card">
+                <h2>Request a Vibe 🎶</h2>
+                <p style="color: var(--text-gray); font-size: 0.8rem; text-align: center; margin-bottom: 20px;">Send a message or song request straight to Zynu's studio.</p>
+                <input type="text" id="reqTitle" class="req-input" placeholder="Song Title or Vibe">
+                <textarea id="reqNote" class="req-input" placeholder="Tell us more about this track..." style="min-height: 80px; resize: vertical;"></textarea>
+                <button class="form-submit" onclick="submitRequest()">Send to Studio</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXPLORE FEATURES MODAL -->
+    <div class="modal-overlay" id="exploreModal">
+        <div class="modal-wrapper">
+            <button class="close-modal" onclick="closeModal('exploreModal')">&times;</button>
+            <div class="form-card" style="text-align: center;">
+                <h2>Discover ZoneVaz 🔮</h2>
+                <p style="color: var(--text-gray); font-size: 0.8rem; margin-bottom: 20px;">Unlock premium aesthetic experiences.</p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button class="form-submit" style="margin-top: 0; font-size: 0.8rem; padding: 12px;" onclick="confirmNavigation('Trending Global Charts 🔥', 'trending.html')">🔥 Trending Charts</button>
+                    <button class="form-submit" style="margin-top: 0; font-size: 0.8rem; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--cute-purple); color: var(--text-white);" onclick="confirmNavigation('Custom Playlists 📁', 'playlists.html')">📁 My Playlists</button>
+                    <button class="form-submit" style="margin-top: 0; font-size: 0.8rem; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--cute-pink); color: var(--text-white);" onclick="confirmNavigation('Vibe Visualizer Studio 🎛️', 'visualizer.html')">🎛️ Visualizer</button>
+                    <button class="form-submit" style="margin-top: 0; font-size: 0.8rem; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-soft); color: var(--text-white);" onclick="confirmNavigation('Lyrics Viewer 🎤', 'lyrics.html')">🎤 Read Lyrics</button>
+                    <button class="form-submit" style="margin-top: 0; font-size: 0.8rem; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-soft); color: var(--text-white);" onclick="openQuotaModal()">🎫 My Daily Quota</button>
+                    <button class="form-submit" style="margin-top: 0; font-size: 0.8rem; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-soft); color: var(--text-white);" onclick="openHistoryModal()">📜 Download History</button>
+                    <button class="form-submit" style="margin-top: 0; font-size: 0.8rem; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--cute-purple); color: var(--text-white);" onclick="openVibeModal()">🎶 Vibe Quick Picks</button>
+                    <button class="form-submit" style="margin-top: 0; font-size: 0.8rem; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--cute-pink); color: var(--text-white);" onclick="shareSite()">📤 Share ZoneVaz</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVIGATION CONFIRMATION MODAL -->
+    <div class="modal-overlay" id="confirmNavModal">
+        <div class="modal-wrapper">
+            <div class="form-card" style="text-align: center; border-color: var(--cute-purple);">
+                <h2 id="navConfirmTitle">Enter Zone?</h2>
+                <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 10px; margin-bottom: 20px;">Are you sure you want to navigate to this premium section?</p>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button class="form-submit" id="btnConfirmGo" style="margin-top: 0; background: var(--cute-purple); color: #fff;">Yes, Take Me There 🚀</button>
+                    <button class="form-submit" style="margin-top: 0; background: transparent; border: 1px solid var(--text-gray); color: var(--text-gray);" onclick="closeModal('confirmNavModal')">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGOUT CONFIRMATION MODAL -->
+    <div class="modal-overlay" id="logoutModal">
+        <div class="modal-wrapper">
+            <div class="form-card" style="text-align: center;">
+                <h2>Logout? 🚪</h2>
+                <p style="color: var(--text-gray); font-size: 0.85rem; margin-top: 12px; margin-bottom: 20px;">Are you sure you want to logout?</p>
+                <div style="display: flex; gap: 10px;">
+                    <button class="form-submit" style="margin-top: 0;" onclick="confirmLogout()">Yes, Logout</button>
+                    <button class="form-submit" style="margin-top: 0; background: transparent; border: 1px solid var(--text-gray); color: var(--text-gray);" onclick="closeModal('logoutModal')">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MY DAILY QUOTA MODAL -->
+    <div class="modal-overlay" id="quotaModal">
+        <div class="modal-wrapper">
+            <button class="close-modal" onclick="closeModal('quotaModal')">&times;</button>
+            <div class="form-card" style="text-align: center;">
+                <h2>My Daily Quota 🎫</h2>
+                <p style="color: var(--text-gray); font-size: 0.8rem; margin-bottom: 20px;">Downloads reset every day at midnight.</p>
+                <div id="quotaBody"><p style="color: var(--text-gray);">Loading...</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DOWNLOAD HISTORY MODAL -->
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal-wrapper">
+            <button class="close-modal" onclick="closeModal('historyModal')">&times;</button>
+            <div class="form-card" style="text-align: center;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="margin-bottom: 0;">Download History 📜</h2>
+                    <button class="action-btn" style="color: var(--accent-red, #ff4757); border-color: var(--accent-red, #ff4757);" onclick="clearHistory()">Clear</button>
+                </div>
+                <div id="historyList" style="margin-top: 18px; max-height: 55vh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; text-align: left;">
+                    <p style="color: var(--text-gray); text-align: center;">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIBE QUICK PICKS MODAL -->
+    <div class="modal-overlay" id="vibeModal">
+        <div class="modal-wrapper">
+            <button class="close-modal" onclick="closeModal('vibeModal')">&times;</button>
+            <div class="form-card" style="text-align: center;">
+                <h2>Vibe Quick Picks 🎶</h2>
+                <p style="color: var(--text-gray); font-size: 0.8rem; margin-bottom: 20px;">Tap a vibe and instantly pull matching tracks.</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" id="vibeGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="logo" onclick="handleLogoClick(event)">
+            ZoneVaz <span id="secretSparkle" title="Studio Access">✨</span>
+        </div>
+        <div class="nav-links">
+            <button class="nav-pill" onclick="cycleTheme()">🎨 Theme</button>
+            <button class="nav-pill" onclick="openModal('aboutModal')">About</button>
+            
+            <span class="user-greeting" id="navGreeting">
+                <!-- Logged in profile renders here -->
+            </span>
+            
+            <button class="nav-pill" id="navLogoutBtn" style="display: none; border-color: rgba(255, 107, 107, 0.4); color: #ff6b6b;" onmouseover="this.style.background='rgba(255, 107, 107, 0.1)'" onmouseout="this.style.background='transparent'" onclick="logoutUser()">Logout</button>
+
+            <a href="login.html" class="nav-pill" id="navLoginBtn">Login</a>
+        </div>
+    </nav>
+
+    <!-- MAIN APP CONTENT -->
+    <div class="main-content">
+        <div class="hero">
+            <h1>ZoneVaz Music Hub</h1>
+            <p>Listen, download, and build your perfect aesthetic library 🎧</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('originals', this)">Zynu's Originals 🌸</button>
+            <button class="tab-btn" onclick="switchTab('global', this)">Global Downloader 🌍</button>
+            <button class="tab-btn" onclick="handleLibraryTabClick(this)">My Library 💖</button>
+            <button class="tab-btn" style="border-color: var(--cute-purple); color: var(--cute-purple); font-weight: 800; background: rgba(196, 159, 255, 0.05);" onclick="openModal('exploreModal')">Explore 🔮</button>
+        </div>
+
+        <div id="sec-originals" class="tab-section active-section">
+            <div class="search-container">
+                <input type="text" class="search-bar" id="localSearch" placeholder="Search Zynu's tracks..." oninput="renderOriginals(this.value)">
+            </div>
+            <div class="grid" id="originalsGrid"></div>
+        </div>
+
+        <div id="sec-global" class="tab-section">
+            <div class="search-container">
+                <input type="text" id="apiSearchInput" class="search-bar" placeholder="Search any global song (Press Enter) 🎵" onkeypress="handleSearch(event)">
+            </div>
+            <div class="grid" id="apiResultsGrid">
+                <p class="loading-text" style="color: var(--text-gray);">Search above to fetch tracks from Spotify Engine 🚀</p>
+            </div>
+        </div>
+
+        <div id="sec-library" class="tab-section">
+            <div class="grid" id="libraryResultsGrid"></div>
+        </div>
+
+        <footer>
+            <button class="action-btn" onclick="handleRequestClick()" style="border-color: var(--cute-pink); color: var(--cute-pink); padding: 8px 20px;">💌 Send Song Request</button>
+            <span>&copy; 2026 ZoneVaz. Crafted with <span style="color: var(--cute-pink);">💖</span> by Zynu.</span>
+        </footer>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="common.js?v=4"></script>
+    <script>
+        // --- AUDIO VISUALIZER & DYNAMIC COLOR EXTRACTOR ---
+        let audioCtx;
+        let analyser;
+        let sourceNodes = new Map();
+
+        document.addEventListener('play', function(e) {
+            if (e.target.tagName === 'AUDIO') {
+                document.querySelectorAll('audio').forEach(a => { if (a !== e.target) a.pause(); });
+
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = audioCtx.createAnalyser();
+                    analyser.fftSize = 256;
+                    drawVisualizer();
+                }
+
+                if (!sourceNodes.has(e.target)) {
+                    let source = audioCtx.createMediaElementSource(e.target);
+                    source.connect(analyser);
+                    analyser.connect(audioCtx.destination);
+                    sourceNodes.set(e.target, source);
+                }
+
+                let trackId = e.target.getAttribute('data-trackid');
+                let imgEl = document.getElementById('cover-' + trackId);
+
+                if (imgEl && typeof ColorThief !== 'undefined' && !isCustomPaletteActive()) {
+                    try {
+                        const colorThief = new ColorThief();
+                        if (imgEl.complete) {
+                            let color = colorThief.getColor(imgEl);
+                            document.documentElement.style.setProperty('--cute-pink', `rgb(${color[0]}, ${color[1]}, ${color[2]})`);
+                            document.documentElement.style.setProperty('--cute-purple', `rgb(${Math.min(255, color[0]+50)}, ${Math.max(0, color[1]-30)}, ${Math.min(255, color[2]+50)})`);
+                        }
+                    } catch(err) { console.log('Color vibe extraction skipped.'); }
+                }
+            }
+        }, true);
+
+        function drawVisualizer() {
+            const canvas = document.getElementById('visualizer');
+            const canvasCtx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function draw() {
+                requestAnimationFrame(draw);
+                analyser.getByteFrequencyData(dataArray);
+                canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                let barWidth = (canvas.width / bufferLength) * 2.5;
+                let barHeight;
+                let x = 0;
+
+                for(let i = 0; i < bufferLength; i++) {
+                    barHeight = dataArray[i] / 2;
+                    canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.2)'; 
+                    canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                    x += barWidth + 1;
+                }
+            }
+            draw();
+        }
+
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('visualizer');
+            canvas.width = window.innerWidth;
+        });
+
+        // --- APP STATE (loaded from secure server) ---
+        let currentUser = null;      // { name, email, avatar } or null
+        let serverPalette = null;
+        let allOriginals = [];       // tracks from /api/tracks
+        let libraryCache = [];       // current user's library
+
+        function isCustomPaletteActive() {
+            if (!serverPalette) return false;
+            const d = { pink: '#ff9ebd', purple: '#c49fff', bg: '#0c0511', card: '#130919' };
+            return !!(serverPalette.pink !== d.pink || serverPalette.purple !== d.purple ||
+                      serverPalette.bg !== d.bg || serverPalette.card !== d.card);
+        }
+
+        function isLoggedIn() { return !!currentUser; }
+
+        function handleRequestClick() {
+            if (isLoggedIn()) openModal('requestModal'); 
+            else openModal('loginPromptModal');
+        }
+
+        function handleLibraryTabClick(btnElement) {
+            if (!isLoggedIn()) { openModal('loginPromptModal'); return; }
+            switchTab('library', btnElement);
+        }
+
+        function handleLogoClick(e) {
+            if (e.target && e.target.id === 'secretSparkle') return;
+            switchTab('originals', document.querySelector('.tab-btn'));
+        }
+
+        (function initSparkleTrigger() {
+            const sparkle = document.getElementById('secretSparkle');
+            let clickCount = 0;
+            let timer = null;
+            sparkle.addEventListener('click', function(e) {
+                e.preventDefault(); e.stopPropagation();
+                clickCount++;
+                if (clickCount === 1) {
+                    sparkle.style.transform = "scale(1.4)";
+                    timer = setTimeout(() => { clickCount = 0; sparkle.style.transform = "scale(1)"; }, 500);
+                } else if (clickCount >= 2) {
+                    clearTimeout(timer); clickCount = 0; sparkle.style.transform = "scale(1)";
+                    window.location.href = 'admin.html';
+                }
+            });
+        })();
+
+        // --- THEMES (client-side cosmetic preference, unchanged behaviour) ---
+        const themes = ['', 'theme-cyber', 'theme-sakura']; 
+        let currentThemeIndex = 0;
+        const savedTheme = localStorage.getItem('zonevaz_theme');
+        if (savedTheme && !isCustomPaletteActive()) {
+            currentThemeIndex = themes.indexOf(savedTheme);
+            if (currentThemeIndex !== -1 && savedTheme !== '') document.body.classList.add(savedTheme);
+        }
+
+        function cycleTheme() {
+            if (isCustomPaletteActive()) {
+                alert("Custom Studio Theme is active! Reset it in Admin Panel to use standard themes.");
+                return;
+            }
+            document.body.className = ''; 
+            currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+            if (themes[currentThemeIndex] !== '') document.body.classList.add(themes[currentThemeIndex]);
+            localStorage.setItem('zonevaz_theme', themes[currentThemeIndex]);
+        }
+
+        function checkLoginState() {
+            const greeting = document.getElementById('navGreeting');
+            if (currentUser) {
+                document.getElementById('navLoginBtn').style.display = 'none';
+                document.getElementById('navLogoutBtn').style.display = 'inline-block';
+                const avatar = currentUser.avatar || '☁️';
+                const avatarDisplay = avatar.startsWith('data:image')
+                    ? `<img src="${avatar}" class="user-avatar-img" alt="">`
+                    : `<span style="font-size: 1rem;">${ZV.esc(avatar)}</span>`;
+                greeting.innerHTML = `
+                    <a href="profile.html" class="profile-link" title="Edit Profile">
+                        ${avatarDisplay} <span class="profile-name">Hi, ${ZV.esc(currentUser.name)}</span> <span class="edit-icon">⚙️</span>
+                    </a>`;
+                greeting.style.display = 'flex';
+            } else {
+                document.getElementById('navLoginBtn').style.display = 'inline-block';
+                document.getElementById('navLogoutBtn').style.display = 'none';
+                greeting.style.display = 'none';
+            }
+        }
+
+        function logoutUser() {
+            openModal('logoutModal');
+        }
+        function confirmLogout() {
+            closeModal('logoutModal');
+            ZV.logout();
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // --- PREMIUM IG MODAL SCRIPT ---
+        let igTimer = null;
+        let igStart = 0;
+
+        function openIGModal(title, artist, coverUrl = '') {
+            document.getElementById('igModalTitle').innerText = title;
+            document.getElementById('igModalArtist').innerText = artist;
+            
+            const coverImg = document.getElementById('igModalCover');
+            const vinyl = document.getElementById('igModalVinyl');
+            const coverBg = document.getElementById('igCoverBg');
+
+            if (coverUrl && coverUrl.trim() !== '') {
+                coverImg.src = coverUrl;
+                coverImg.style.display = 'block';
+                vinyl.style.display = 'none';
+                coverBg.style.backgroundImage = `url("${coverUrl.replace(/"/g, '&quot;')}")`;
+                coverBg.classList.add('show');
+            } else {
+                coverImg.src = '';
+                coverImg.style.display = 'none';
+                vinyl.style.display = 'flex';
+                coverBg.style.backgroundImage = '';
+                coverBg.classList.remove('show');
+            }
+
+            document.getElementById('igTimeNow').innerText = '0:00';
+            document.getElementById('igTimeTotal').innerText = '3:24';
+            document.getElementById('igProgFill').style.width = '0%';
+            igStart = Date.now();
+            clearInterval(igTimer);
+            igTimer = setInterval(tickIG, 1000);
+
+            openModal('igModal');
+        }
+
+        function tickIG() {
+            const total = 204; // 3:24 in seconds
+            const elapsed = Math.floor((Date.now() - igStart) / 1000);
+            const cur = Math.min(elapsed, total);
+            const mins = Math.floor(cur / 60);
+            const secs = (cur % 60).toString().padStart(2, '0');
+            document.getElementById('igTimeNow').innerText = `${mins}:${secs}`;
+            const pct = Math.min(100, (cur / total) * 100);
+            document.getElementById('igProgFill').style.width = pct + '%';
+        }
+
+        function closeIGModal() {
+            clearInterval(igTimer);
+            igTimer = null;
+            closeModal('igModal');
+        }
+
+        async function shareToIG(btnElement) {
+            let originalText = btnElement.innerText;
+            btnElement.innerText = "⏳ Generating Card...";
+            const captureDiv = document.getElementById('captureCard');
+            
+            try {
+                const canvas = await html2canvas(captureDiv, { scale: 2, useCORS: true, backgroundColor: null });
+                canvas.toBlob(async (blob) => {
+                    const file = new File([blob], "ZoneVaz_Story.png", { type: "image/png" });
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                    if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            btnElement.innerText = "🚀 Opening Share...";
+                            await navigator.share({ files: [file], title: 'ZoneVaz ✨' });
+                            btnElement.innerText = "✅ Shared!";
+                        } catch (err) { fallbackDownload(blob); }
+                    } else { fallbackDownload(blob); }
+                    setTimeout(() => { btnElement.innerText = originalText; }, 2500);
+                }, "image/png");
+            } catch(e) {
+                btnElement.innerText = "❌ Failed"; setTimeout(() => { btnElement.innerText = originalText; }, 2500);
+            }
+        }
+
+        function fallbackDownload(blob) {
+            const url = window.URL.createObjectURL(blob); 
+            const a = document.createElement('a');
+            a.style.display = 'none'; a.href = url; a.download = "ZoneVaz_IG_Story.png";
+            document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
+            alert("📸 HD Image Downloaded!\nUpload this directly to your IG Story.");
+        }
+
+        let targetUrl = '';
+        function confirmNavigation(featureName, url) {
+            closeModal('exploreModal');
+            targetUrl = url;
+            document.getElementById('navConfirmTitle').innerText = featureName;
+            document.getElementById('btnConfirmGo').onclick = function() {
+                window.location.href = targetUrl;
+            };
+            openModal('confirmNavModal');
+        }
+
+        async function submitRequest() {
+            const title = document.getElementById('reqTitle').value.trim();
+            const note = document.getElementById('reqNote').value.trim();
+            if(!title) { alert("Please enter a song title or vibe!"); return; }
+            try {
+                await ZV.api('/api/requests', { method: 'POST', body: { songTitle: title, note: note } });
+                document.getElementById('reqTitle').value = '';
+                document.getElementById('reqNote').value = '';
+                closeModal('requestModal');
+                alert("Sent! Zynu will see this in the Studio Inbox. 🎶");
+            } catch (e) {
+                alert(e.message || 'Could not send request.');
+            }
+        }
+
+        function extractSpotifyId(url) {
+            const match = url ? url.match(/track\/([a-zA-Z0-9]+)/) : null;
+            return match ? match[1] : null;
+        }
+
+        // --- ORIGINALS (from server, admin-managed) ---
+        async function loadOriginals() {
+            try {
+                const data = await ZV.api('/api/tracks');
+                allOriginals = (data && data.tracks) || [];
+            } catch (e) {
+                allOriginals = [];
+            }
+            renderOriginals(document.getElementById('localSearch').value);
+        }
+
+        function renderOriginals(filterQuery = "") {
+            const grid = document.getElementById('originalsGrid');
+            let tracks = allOriginals.slice();
+            grid.innerHTML = '';
+
+            if (filterQuery) tracks = tracks.filter(t => (t.title || '').toLowerCase().includes(filterQuery.toLowerCase()));
+            tracks.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+
+            if(tracks.length === 0) { grid.innerHTML = '<p class="loading-text" style="color: var(--text-gray);">No original tracks found.</p>'; return; }
+
+            tracks.forEach(track => {
+                let isSaved = libraryCache.some(t => t.trackId === track.id);
+                let heartClass = isSaved ? "heart-icon saved" : "heart-icon";
+                let heartIcon = isSaved ? "💖" : "🤍";
+
+                let platformBtns = '';
+                if(track.links) {
+                    if(track.links.spotify) platformBtns += `<a href="${ZV.esc(track.links.spotify)}" target="_blank" rel="noopener" class="action-btn btn-spotify">🎵 Spotify</a>`;
+                    if(track.links.youtube) platformBtns += `<a href="${ZV.esc(track.links.youtube)}" target="_blank" rel="noopener" class="action-btn btn-youtube">▶️ YouTube</a>`;
+                    if(track.links.apple) platformBtns += `<a href="${ZV.esc(track.links.apple)}" target="_blank" rel="noopener" class="action-btn btn-apple">🍎 Apple</a>`;
+                    if(track.links.soundcloud) platformBtns += `<a href="${ZV.esc(track.links.soundcloud)}" target="_blank" rel="noopener" class="action-btn btn-soundcloud">☁️ Soundcloud</a>`;
+                }
+                
+                let descHTML = track.details ? `<p class="card-desc">${ZV.esc(track.details).replace(/\n/g, '<br>')}</p>` : '';
+                
+                let playerHTML = '';
+                if(track.audioUrl) {
+                    playerHTML = `<audio data-trackid="${track.id}" controls crossorigin="anonymous"><source src="${ZV.esc(track.audioUrl)}" type="audio/mpeg">Your browser does not support audio.</audio>`;
+                } else {
+                    let spotifyId = extractSpotifyId(track.links && track.links.spotify);
+                    playerHTML = spotifyId 
+                        ? `<iframe src="https://open.spotify.com/embed/track/${ZV.esc(spotifyId)}?utm_source=generator&theme=0" width="100%" height="80" frameBorder="0" allowfullscreen="" style="border-radius: 10px;" title="Spotify player"></iframe>`
+                        : `<span style="color:var(--text-gray); font-size:0.7rem;">(Stream via links above)</span>`;
+                }
+
+                let imgHTML = track.cover ? `<img id="cover-${track.id}" src="${ZV.esc(track.cover)}" crossorigin="anonymous" style="display:none;" alt="">` : '';
+                let pinIcon = track.pinned ? '<span style="font-size:0.8rem;" title="Pinned Release">⭐</span> ' : '';
+                let badge = track.tag ? `<span style="background:rgba(255,158,189,0.15); color:var(--cute-pink); padding:2px 8px; border-radius:10px; font-size:0.6rem; margin-top:4px; display:inline-block;">${ZV.esc(track.tag)}</span>` : '';
+                let coverData = track.cover ? track.cover : '';
+
+                // Data-attributes hold user content; events are delegated (XSS-safe).
+                let favAttrs = `data-action="fav" data-id="${track.id}" data-title="${ZV.esc(track.title)}" data-artist="${ZV.esc(track.artist)}"`;
+                let igAttrs  = `data-action="ig" data-title="${ZV.esc(track.title)}" data-artist="${ZV.esc(track.artist)}" data-cover="${ZV.esc(coverData)}"`;
+
+                let cardHTML = `
+                <div class="card" ${track.pinned ? 'style="border-color: var(--cute-pink);"' : ''}>
+                    ${imgHTML}
+                    <div class="card-header">
+                        <div><h3>${pinIcon}${ZV.esc(track.title)}</h3><p>${ZV.esc(track.artist)}</p>${badge}</div>
+                        <div class="${heartClass}" role="button" aria-label="Save to library" ${favAttrs}>${heartIcon}</div>
+                    </div>
+                    ${descHTML}
+                    <div class="actions-tray">
+                        <button class="action-btn" ${igAttrs}>📸 IG Story</button>
+                        ${platformBtns}
+                    </div>
+                    <div class="player-box">${playerHTML}</div>
+                </div>`;
+                grid.innerHTML += cardHTML;
+            });
+        }
+
+        // --- LIBRARY (per-user, stored securely on the server) ---
+        async function refreshLibrary() {
+            if (!currentUser) { libraryCache = []; return []; }
+            try {
+                const data = await ZV.api('/api/library');
+                libraryCache = (data && data.library) || [];
+            } catch (e) { libraryCache = []; }
+            return libraryCache;
+        }
+
+        async function toggleFavorite(trackId, title, artist, btnElement) {
+            if (!isLoggedIn()) { openModal('loginPromptModal'); return; }
+            try {
+                const data = await ZV.api('/api/library', { method: 'POST', body: { trackId, title, artist } });
+                libraryCache = (data && data.library) || [];
+                const added = !!(data && data.added);
+                btnElement.classList.toggle('saved', added);
+                btnElement.innerText = added ? '💖' : '🤍';
+                if(document.getElementById('sec-library').classList.contains('active-section')) renderLibrary();
+            } catch (e) {
+                alert(e.message || 'Could not update your library.');
+            }
+        }
+
+        async function renderLibrary() {
+            const grid = document.getElementById('libraryResultsGrid');
+            if (!currentUser) { grid.innerHTML = '<p class="loading-text" style="color: var(--text-gray);">Please login to view your library.</p>'; return; }
+            await refreshLibrary();
+            grid.innerHTML = '';
+            if(libraryCache.length === 0) { grid.innerHTML = '<p class="loading-text" style="color: var(--text-gray);">Your library is empty. Go save some aesthetic tracks! ☁️</p>'; return; }
+            libraryCache.forEach(track => {
+                let isOriginal = track.trackId && track.trackId.toString().startsWith('z');
+                
+                let playerHTML = '';
+                let coverData = '';
+
+                if(isOriginal) {
+                    let oTrack = allOriginals.find(t => t.id === track.trackId);
+                    if (oTrack && oTrack.cover) coverData = oTrack.cover;
+                    if(oTrack && oTrack.audioUrl) {
+                        playerHTML = `<audio data-trackid="${track.trackId}" controls crossorigin="anonymous"><source src="${ZV.esc(oTrack.audioUrl)}" type="audio/mpeg"></audio>`;
+                    } else {
+                        playerHTML = `<span style="color:var(--text-gray); font-size:0.7rem;">(Original Track Audio)</span>`;
+                    }
+                } else {
+                    playerHTML = `<iframe src="https://open.spotify.com/embed/track/${ZV.esc(track.trackId)}?utm_source=generator&theme=0" width="100%" height="80" frameBorder="0" allowfullscreen="" style="border-radius: 10px;" title="Spotify player"></iframe>`;
+                }
+                
+                let dlButtonHTML = isOriginal ? `` : `<button class="action-btn" data-action="dl" data-id="${ZV.esc(track.trackId)}" data-title="${ZV.esc(track.title)}" data-artist="${ZV.esc(track.artist)}">📥 Download MP3</button>`;
+                let igAttrs = `data-action="ig" data-title="${ZV.esc(track.title)}" data-artist="${ZV.esc(track.artist)}" data-cover="${ZV.esc(coverData)}"`;
+                let favAttrs = `data-action="fav" data-id="${ZV.esc(track.trackId)}" data-title="${ZV.esc(track.title)}" data-artist="${ZV.esc(track.artist)}"`;
+
+                let cardHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div><h3 title="${ZV.esc(track.title)}">${ZV.esc(track.title)}</h3><p>${ZV.esc(track.artist)}</p></div>
+                        <div class="heart-icon saved" role="button" aria-label="Remove from library" ${favAttrs}>💖</div>
+                    </div>
+                    <div class="actions-tray">
+                        ${dlButtonHTML}
+                        <button class="action-btn" ${igAttrs}>📸 IG Story</button>
+                    </div>
+                    <div class="player-box">${playerHTML}</div>
+                </div>`;
+                grid.innerHTML += cardHTML;
+            });
+        }
+
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            if(btnElement) btnElement.classList.add('active');
+            document.querySelectorAll('.tab-section').forEach(sec => sec.classList.remove('active-section'));
+            document.getElementById('sec-' + tabId).classList.add('active-section');
+            if(tabId === 'library') renderLibrary();
+            if(tabId === 'originals') renderOriginals(document.getElementById('localSearch').value);
+        }
+
+        // --- GLOBAL SEARCH (proxied through the server — API keys stay secret) ---
+        function logSearchToAdmin(query) {
+            ZV.api('/api/searches', { method: 'POST', body: { query: query } }).catch(function(){});
+        }
+
+        function extractTracks(obj) {
+            let res = [];
+            function searchObj(item) {
+                if (res.length > 0) return; 
+                if (Array.isArray(item)) {
+                    if (item.length > 0 && typeof item[0] === 'object' && item[0] !== null) {
+                        let s = item[0];
+                        if ((s && (s.id || s.trackId || s.uri)) && (s && (s.name || s.title || s.trackName))) { res = item; return; }
+                    }
+                    for (let i = 0; i < item.length; i++) searchObj(item[i]);
+                } else if (typeof item === 'object' && item !== null) { for (let key in item) searchObj(item[key]); }
+            }
+            searchObj(obj); return res;
+        }
+
+        async function handleSearch(event) {
+            if(event.key === 'Enter') {
+                const query = document.getElementById('apiSearchInput').value.trim();
+                if(!query) return;
+                await performSearch(query);
+            }
+        }
+
+        async function performSearch(query) {
+            logSearchToAdmin(query);
+            const grid = document.getElementById('apiResultsGrid');
+            grid.innerHTML = '<p class="loading-text">Searching global database... ⏳</p>';
+            try {
+                const data = await ZV.api('/api/search?q=' + encodeURIComponent(query));
+                let tracks = extractTracks(data);
+                if(!tracks || tracks.length === 0) {
+                    grid.innerHTML = '<p class="loading-text" style="color: var(--text-gray);">No tracks found. Try another query!</p>'; return;
+                }
+                renderApiResults(tracks.slice(0, 10));
+            } catch (error) { 
+                grid.innerHTML = `<p class="loading-text" style="color: #ff6b6b;">Fetch Failed 🥺<br><span style="font-size:0.7rem;">The search engine may be busy. Try again later.</span></p>`; 
+            }
+        }
+
+        function renderApiResults(tracks) {
+            const grid = document.getElementById('apiResultsGrid');
+            grid.innerHTML = '';
+            
+            tracks.forEach(track => {
+                let rawId = (track && (track.id || track.trackId || track.uri)); if(!rawId) return;
+                let trackId = rawId.includes(':') ? rawId.split(':').pop() : rawId;
+                let title = (track && (track.name || track.title)) || "Unknown Track";
+                let artist = (track && track.artists && track.artists[0]) ? (track.artists[0].name || track.artists[0]) : "Unknown Artist";
+                if (typeof artist === 'object') artist = "Unknown Artist";
+
+                let isSaved = libraryCache.some(t => t.trackId === trackId);
+                let heartClass = isSaved ? "heart-icon saved" : "heart-icon";
+                let heartIcon = isSaved ? "💖" : "🤍";
+
+                let favAttrs = `data-action="fav" data-id="${ZV.esc(trackId)}" data-title="${ZV.esc(title)}" data-artist="${ZV.esc(artist)}"`;
+                let dlAttrs  = `data-action="dl" data-id="${ZV.esc(trackId)}" data-title="${ZV.esc(title)}" data-artist="${ZV.esc(artist)}"`;
+                let igAttrs  = `data-action="ig" data-title="${ZV.esc(title)}" data-artist="${ZV.esc(artist)}" data-cover="${ZV.esc(track.cover || '')}"`;
+
+                let cardHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div><h3 title="${ZV.esc(title)}">${ZV.esc(title)}</h3><p>${ZV.esc(artist)}</p></div>
+                        <div class="${heartClass}" role="button" aria-label="Save to library" ${favAttrs}>${heartIcon}</div>
+                    </div>
+                    <div class="actions-tray">
+                        <button class="action-btn" ${dlAttrs}>📥 Download MP3</button>
+                        <button class="action-btn" ${igAttrs}>📸 IG Story</button>
+                    </div>
+                    <div class="player-box"><iframe src="https://open.spotify.com/embed/track/${ZV.esc(trackId)}?utm_source=generator&theme=0" width="100%" height="80" frameBorder="0" allowfullscreen="" style="border-radius: 10px;" title="Spotify player"></iframe></div>
+                </div>`;
+                grid.innerHTML += cardHTML;
+            });
+        }
+
+        function downloadSong(trackId, title, artist) {
+            const dlUrl = `download.html?id=${encodeURIComponent(trackId)}&title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`;
+            window.open(dlUrl, '_blank');
+        }
+
+        // --- EXPLORE: MY DAILY QUOTA ---
+        async function openQuotaModal() {
+            closeModal('exploreModal');
+            const body = document.getElementById('quotaBody');
+            body.innerHTML = '<p style="color: var(--text-gray);">Loading...</p>';
+            openModal('quotaModal');
+
+            if (!currentUser) {
+                body.innerHTML = `
+                    <p style="color: var(--text-gray); font-size: 0.85rem; margin-bottom: 15px;">You're browsing as a guest.</p>
+                    <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-soft); border-radius: 14px; padding: 14px; margin-bottom: 14px;">
+                        <div style="font-size: 1.6rem; font-weight: 800; color: var(--cute-pink);">3 / day</div>
+                        <div style="font-size: 0.75rem; color: var(--text-gray); margin-top: 4px;">Free guest downloads per day</div>
+                    </div>
+                    <button class="form-submit" onclick="window.location.href='login.html'">Login for 20/day 🎧</button>`;
+                return;
+            }
+            try {
+                const q = await ZV.api('/api/mykey');
+                const pct = Math.min(100, Math.round((q.used / q.limit) * 100));
+                body.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-soft); border-radius: 14px; padding: 14px; margin-bottom: 14px;">
+                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--cute-pink);">${q.used} / ${q.limit}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-gray); margin-top: 4px;">downloads used today</div>
+                        <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 10px; overflow: hidden;">
+                            <div style="height: 100%; width: ${pct}%; background: var(--gradient-main); border-radius: 3px;"></div>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-gray); font-size: 0.7rem; margin-bottom: 6px;">Your unique Vibe Key (20 downloads/day)</p>
+                    <div style="background: rgba(0,0,0,0.3); border: 1px dashed var(--cute-purple); border-radius: 10px; padding: 10px; font-family: monospace; font-size: 0.75rem; color: var(--cute-purple); word-break: break-all; margin-bottom: 10px;" id="quotaKey">${ZV.esc(q.key)}</div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="form-submit" style="margin-top: 0; font-size: 0.8rem; padding: 12px;" onclick="copyQuotaKey()">📋 Copy Key</button>
+                        <button class="form-submit" style="margin-top: 0; font-size: 0.8rem; padding: 12px; background: transparent; border: 1px solid var(--cute-pink); color: var(--cute-pink);" onclick="regenerateQuotaKey(this)">🔄 Reset Key</button>
+                    </div>`;
+            } catch (e) {
+                body.innerHTML = '<p style="color: var(--text-gray);">Could not load your quota.</p>';
+            }
+        }
+
+        async function copyQuotaKey() {
+            const key = document.getElementById('quotaKey').innerText;
+            const ok = await ZV.copyText(key);
+            alert(ok ? "Vibe Key copied to clipboard! 📋" : "Could not copy automatically. Key shown above.");
+        }
+
+        async function regenerateQuotaKey(btn) {
+            if (!confirm("Regenerate your Vibe Key? Old key stops working.")) return;
+            btn.disabled = true;
+            try {
+                const q = await ZV.api('/api/regenerate/key', { method: 'POST' });
+                document.getElementById('quotaKey').innerText = q.key;
+                alert("New Vibe Key generated! ✨");
+            } catch (e) { alert(e.message || 'Could not regenerate key.'); }
+            btn.disabled = false;
+        }
+
+        // --- EXPLORE: DOWNLOAD HISTORY ---
+        async function openHistoryModal() {
+            closeModal('exploreModal');
+            const list = document.getElementById('historyList');
+            list.innerHTML = '<p style="color: var(--text-gray); text-align: center;">Loading...</p>';
+            openModal('historyModal');
+
+            if (!currentUser) {
+                list.innerHTML = '<p style="color: var(--text-gray); text-align: center; margin: 20px 0;">Log in to keep a download history. 💖</p><button class="form-submit" onclick="window.location.href=\'login.html\'">Login / Sign Up</button>';
+                return;
+            }
+            try {
+                const d = await ZV.api('/api/history');
+                const hist = (d && d.history) || [];
+                if (hist.length === 0) {
+                    list.innerHTML = '<p style="color: var(--text-gray); text-align: center; margin: 20px 0;">No downloads yet. Go grab some vibes! 🎧</p>';
+                    return;
+                }
+                list.innerHTML = hist.map(h => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border: 1px solid var(--border-soft); border-radius: 12px; padding: 10px 14px; margin-bottom: 8px;">
+                        <div style="min-width: 0;">
+                            <div style="font-weight: 700; color: #fff; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ZV.esc(h.title)}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-gray);">${ZV.esc(h.artist)}</div>
+                        </div>
+                        <div style="text-align: right; flex-shrink: 0;">
+                            <div style="font-size: 0.65rem; color: var(--text-gray);">${ZV.esc(h.date)}</div>
+                            ${!h.trackId || h.trackId.startsWith('z') ? '' : `<button class="action-btn" style="margin-top: 4px;" onclick="window.open('https://open.spotify.com/track/${encodeURIComponent(h.trackId)}','_blank')">▶ Open</button>`}
+                        </div>
+                    </div>`).join('');
+            } catch (e) {
+                list.innerHTML = '<p style="color: var(--text-gray);">Could not load history.</p>';
+            }
+        }
+
+        async function clearHistory() {
+            if (!confirm("Clear your download history?")) return;
+            try {
+                await ZV.api('/api/history/clear', { method: 'DELETE' });
+                document.getElementById('historyList').innerHTML = '<p style="color: var(--text-gray); text-align: center; margin: 20px 0;">History cleared.</p>';
+            } catch (e) { alert(e.message || 'Could not clear history.'); }
+        }
+
+        // --- EXPLORE: VIBE QUICK PICKS ---
+        const vibePicks = [
+            { label: 'Lo-fi Chill ☕', query: 'lofi chill' },
+            { label: 'Late Night Drive 🌃', query: 'night drive' },
+            { label: 'Workout Pump 💪', query: 'workout' },
+            { label: 'Focus & Study 📖', query: 'focus' },
+            { label: 'Sad Hours 🌧️', query: 'sad' },
+            { label: 'Party Anthems 🎉', query: 'party' }
+        ];
+        function openVibeModal() {
+            closeModal('exploreModal');
+            const grid = document.getElementById('vibeGrid');
+            grid.innerHTML = vibePicks.map(v =>
+                `<button class="form-submit" style="margin-top: 0; font-size: 0.8rem; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--cute-purple); color: var(--text-white);" onclick="runVibePick('${v.query}')">${v.label}</button>`
+            ).join('');
+            openModal('vibeModal');
+        }
+        async function runVibePick(query) {
+            closeModal('vibeModal');
+            document.getElementById('apiSearchInput').value = query;
+            switchTab('global', document.querySelectorAll('.tab-btn')[1]);
+            await performSearch(query);
+        }
+
+        // --- EXPLORE: SHARE ---
+        function shareSite() {
+            const url = window.location.href.split('?')[0];
+            const text = '🎧 Come vibe with me on ZoneVaz — an aesthetic music universe!';
+            if (navigator.share) {
+                navigator.share({ title: 'ZoneVaz ✨', text, url }).catch(function(){});
+            } else {
+                ZV.copyText(url).then(function(ok){ alert(ok ? 'ZoneVaz link copied! 📤' : url); });
+            }
+            closeModal('exploreModal');
+        }
+
+        // --- EVENT DELEGATION (no user data ever goes into inline JS) ---
+        document.addEventListener('click', function(e) {
+            const el = e.target.closest('[data-action]');
+            if (!el) return;
+            const action = el.getAttribute('data-action');
+            const id = el.getAttribute('data-id');
+            const title = el.getAttribute('data-title');
+            const artist = el.getAttribute('data-artist');
+
+            if (action === 'fav') {
+                toggleFavorite(id, title, artist, el);
+            } else if (action === 'dl') {
+                downloadSong(id, title, artist);
+            } else if (action === 'ig') {
+                openIGModal(title, artist, el.getAttribute('data-cover') || '');
+            }
+        });
+
+        // --- BOOTSTRAP (auth + config from the secure server) ---
+        async function init() {
+            const boot = await ZV.bootstrap();
+            currentUser = boot.user;
+            serverPalette = (boot.config && boot.config.palette) || null;
+            // If the admin has a custom palette active, it wins over saved client themes.
+            if (isCustomPaletteActive()) {
+                document.body.classList.remove('theme-cyber', 'theme-sakura');
+                currentThemeIndex = 0;
+            } else if (savedTheme) {
+                currentThemeIndex = themes.indexOf(savedTheme);
+                if (currentThemeIndex !== -1 && savedTheme !== '') document.body.classList.add(savedTheme);
+            }
+            checkLoginState();
+            await refreshLibrary();
+            await loadOriginals();
+        }
+        init();
+    </script>
+</body>
+</html>
