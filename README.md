@@ -1,4 +1,4 @@
-# ✨ ZoneVaz Studio
+# ✨ ZoneVaz Studio ✨
 
 <p align="center">
   <strong>Aesthetic Music. Personal Library. Your Space.</strong>
